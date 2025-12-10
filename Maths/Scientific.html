@@ -1,664 +1,307 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Scientific Calculator</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root {
-      --bg: #050816;
-      --bg-alt: #111827;
-      --bg-key: #1f2937;
-      --bg-key-soft: #111827;
-      --accent: #06b6d4;
-      --accent-soft: rgba(34,211,238,0.16);
-      --danger: #f97373;
-      --text: #f9fafb;
-      --muted: #9ca3af;
-      --border: #4b5563;
-      --radius-lg: 18px;
-      --radius-pill: 999px;
-      --shadow-soft: 0 20px 40px rgba(0,0,0,0.55);
-      --transition-fast: 0.12s ease-out;
+import React, { useState } from 'react';
+
+// ScientificCalculator.jsx
+// Single-file React component (Tailwind CSS) that implements a scientific calculator
+// Default export a React component. Copy into a React app that has Tailwind configured.
+
+export default function ScientificCalculator() {
+  const [expr, setExpr] = useState(''); // expression shown in input area
+  const [display, setDisplay] = useState('0'); // main display (result or current number)
+  const [degMode, setDegMode] = useState(true); // true -> Deg, false -> Rad
+  const [memory, setMemory] = useState(0);
+  const [ans, setAns] = useState(0);
+
+  // helper math functions available to evaluator
+  const helpers = {
+    sin: (x) => (degMode ? Math.sin((x * Math.PI) / 180) : Math.sin(x)),
+    cos: (x) => (degMode ? Math.cos((x * Math.PI) / 180) : Math.cos(x)),
+    tan: (x) => (degMode ? Math.tan((x * Math.PI) / 180) : Math.tan(x)),
+    asin: (x) => (degMode ? (Math.asin(x) * 180) / Math.PI : Math.asin(x)),
+    acos: (x) => (degMode ? (Math.acos(x) * 180) / Math.PI : Math.acos(x)),
+    atan: (x) => (degMode ? (Math.atan(x) * 180) / Math.PI : Math.atan(x)),
+    ln: (x) => Math.log(x),
+    log: (x) => Math.log10(x),
+    exp10: (x) => Math.pow(10, x),
+    expE: (x) => Math.exp(x),
+    sqrt: (x) => Math.sqrt(x),
+    cbrt: (x) => Math.cbrt ? Math.cbrt(x) : Math.pow(x, 1/3),
+    pow: (a, b) => Math.pow(a, b),
+    pi: Math.PI,
+    e: Math.E,
+    abs: Math.abs,
+  };
+
+  // safe evaluate expression using Function with helpers in scope
+  function safeEvaluate(raw) {
+    if (!raw || raw.trim() === '') return 0;
+    try {
+      // replace human-friendly tokens
+      let s = raw
+        .replace(/×/g, '*')
+        .replace(/÷/g, '/')
+        .replace(/\^/g, '**')
+        .replace(/π/g, 'pi')
+        .replace(/\bAns\b/g, `(${ans})`)
+        .replace(/EXP\(/g, '(*10**') // handled separately when using EXP button
+        ;
+
+      // protect letters used by helpers: e.g. sin( -> helpers.sin(
+      // We'll create a function body that has helpers in scope and use identifiers directly (sin, cos...)
+      const fn = new Function(...Object.keys(helpers), `return (${s});`);
+      const res = fn(...Object.values(helpers));
+      if (Number.isFinite(res)) return res;
+      return String(res);
+    } catch (e) {
+      return 'Error';
     }
+  }
 
-    *, *::before, *::after { box-sizing: border-box; }
+  function appendToExpr(token) {
+    // Prevent double leading zeros
+    const newExpr = expr + token;
+    setExpr(newExpr);
+    setDisplay(newExpr);
+  }
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      padding: 1.5rem 0.75rem;
-      background: radial-gradient(circle at top, #1f2937 0, #020617 48%, #000 100%);
-      color: var(--text);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
+  function handleClear() {
+    setExpr('');
+    setDisplay('0');
+  }
 
-    .scicalc {
-      width: 100%;
-      max-width: 420px;
-      background: linear-gradient(145deg, rgba(15,23,42,0.96), rgba(15,23,42,0.8));
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-soft);
-      padding: 1.2rem 1rem 1.4rem;
-      border: 1px solid rgba(148,163,184,0.2);
-      backdrop-filter: blur(16px);
-    }
+  function handleCE() {
+    // Clear last entry: remove last number or operator
+    if (!expr) { handleClear(); return; }
+    // naive: remove last token (either digit sequence, or non-digit)
+    const trimmed = expr.replace(/\s+$/,'');
+    // remove last chunk of digits, or last non-digit
+    const newExpr = trimmed.replace(/\d+\.?\d*$|[()+\-*/%^]$/,'');
+    setExpr(newExpr);
+    setDisplay(newExpr || '0');
+  }
 
-    .scicalc__header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 0.75rem;
-    }
+  function handleBackspace() {
+    if (!expr) return handleClear();
+    const e = expr.slice(0, -1);
+    setExpr(e);
+    setDisplay(e || '0');
+  }
 
-    .scicalc__title {
-      font-size: 1.1rem;
-      margin: 0;
-    }
+  function handleEquals() {
+    const result = safeEvaluate(expr);
+    setDisplay(String(result));
+    setAns(Number(result) || 0);
+    setExpr(String(result));
+  }
 
-    .scicalc__subtitle {
-      margin: 0.25rem 0 0;
-      font-size: 0.75rem;
-      color: var(--muted);
-    }
-
-    .scicalc__toggles {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .toggle-group {
-      background: rgba(15,23,42,0.9);
-      border-radius: var(--radius-pill);
-      padding: 0.12rem;
-      display: inline-flex;
-      border: 1px solid rgba(148,163,184,0.35);
-    }
-
-    .toggle {
-      border: none;
-      background: transparent;
-      color: var(--muted);
-      font-size: 0.75rem;
-      padding: 0.25rem 0.6rem;
-      border-radius: var(--radius-pill);
-      cursor: pointer;
-      transition: background var(--transition-fast), color var(--transition-fast);
-    }
-
-    .toggle.is-active {
-      background: var(--accent-soft);
-      color: var(--accent);
-    }
-
-    .scicalc__display {
-      background: radial-gradient(circle at top left, #1e293b 0, #030712 60%);
-      border-radius: 16px;
-      padding: 0.6rem 0.75rem;
-      margin-bottom: 0.85rem;
-      border: 1px solid rgba(148,163,184,0.25);
-      box-shadow: inset 0 0 0 1px rgba(15,23,42,0.8);
-    }
-
-    .scicalc__history {
-      min-height: 1.1rem;
-      font-size: 0.8rem;
-      color: var(--muted);
-      text-align: right;
-      overflow-x: auto;
-      white-space: nowrap;
-    }
-
-    .scicalc__output {
-      margin-top: 0.25rem;
-      font-size: 1.7rem;
-      font-weight: 600;
-      text-align: right;
-      word-wrap: break-word;
-    }
-
-    .scicalc__keys {
-      display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
-      gap: 0.35rem;
-    }
-
-    .scicalc__keys button {
-      border: none;
-      border-radius: 14px;
-      padding: 0.55rem 0.25rem;
-      font-size: 0.9rem;
-      color: var(--text);
-      background: var(--bg-key);
-      cursor: pointer;
-      user-select: none;
-      box-shadow: 0 2px 0 rgba(15,23,42,0.9);
-      transition:
-        background var(--transition-fast),
-        transform var(--transition-fast),
-        box-shadow var(--transition-fast),
-        color var(--transition-fast);
-    }
-
-    .scicalc__keys button:hover,
-    .scicalc__keys button:focus-visible {
-      outline: none;
-      background: #374151;
-    }
-
-    .scicalc__keys button:active {
-      transform: translateY(1px);
-      box-shadow: 0 0 0 rgba(15,23,42,0.9);
-    }
-
-    .scicalc__keys button.span-2 { grid-column: span 2; }
-
-    .scicalc__keys button.equals {
-      grid-column: span 1;
-      background: linear-gradient(135deg, #06b6d4, #22c55e);
-      color: #022c22;
-      font-weight: 600;
-    }
-
-    .scicalc__keys button.equals:hover {
-      background: linear-gradient(135deg, #22c55e, #06b6d4);
-    }
-
-    .scicalc__keys button.danger {
-      background: #7f1d1d;
-    }
-
-    .scicalc__keys button[data-action="digit"],
-    .scicalc__keys button[data-action="decimal"] {
-      background: var(--bg-key-soft);
-    }
-
-    .scicalc__keys button[data-action="op"],
-    .scicalc__keys button[data-action="equals"] {
-      font-weight: 600;
-    }
-
-    .scicalc__keys button[disabled] {
-      visibility: hidden;
-    }
-
-    @media (max-width: 400px) {
-      .scicalc { max-width: 360px; }
-      .scicalc__keys button {
-        font-size: 0.8rem;
-        padding-inline: 0.1rem;
+  function handleImmediateOp(op) {
+    // parse current displayed value
+    let val = 0;
+    if (expr) {
+      const maybe = safeEvaluate(expr);
+      if (maybe === 'Error') {
+        setDisplay('Error');
+        return;
       }
+      val = Number(maybe);
+    } else {
+      val = Number(display) || 0;
     }
 
-    @media (min-width: 640px) {
-      body { align-items: center; }
-      .scicalc {
-        max-width: 460px;
-        padding-inline: 1.25rem;
-      }
+    let res;
+    switch (op) {
+      case '1/x':
+        res = val === 0 ? 'Error' : 1 / val;
+        break;
+      case '%':
+        // treat % as divide by 100 for current value
+        res = val / 100;
+        break;
+      case 'n!':
+        if (val < 0 || !Number.isInteger(val)) { res = 'Error'; break; }
+        res = 1;
+        for (let i = 1; i <= val; i++) res *= i;
+        break;
+      case '√':
+        res = Math.sqrt(val);
+        break;
+      case '³√':
+        res = helpers.cbrt(val);
+        break;
+      case '±':
+        res = -val;
+        break;
+      case 'Ans':
+        res = ans;
+        break;
+      case 'EXP':
+        // treat as x * 10^y: user will press EXP then digits. We'll append 'e' notation
+        // Instead of complex handling, append 'e' to expression
+        appendToExpr('e');
+        return;
+      default:
+        return;
     }
-  </style>
-</head>
-<body>
-  <div class="scicalc">
-    <header class="scicalc__header">
-      <div>
-        <h1 class="scicalc__title">Scientific Calculator</h1>
-        <p class="scicalc__subtitle">Keyboard friendly • Deg/Rad • Memory</p>
-      </div>
-      <div class="scicalc__toggles">
-        <div class="toggle-group" id="angle-toggle">
-          <button type="button" data-angle="deg" class="toggle is-active">Deg</button>
-          <button type="button" data-angle="rad" class="toggle">Rad</button>
+    setExpr(String(res));
+    setDisplay(String(res));
+    setAns(Number(res) || 0);
+  }
+
+  function handleFunction(fnName) {
+    // append function name then (
+    appendToExpr(fnName + '(');
+  }
+
+  function handleDigit(d) {
+    // if last thing was a ) or factorial, need operator before digit
+    appendToExpr(String(d));
+  }
+
+  function handleDot() {
+    appendToExpr('.');
+  }
+
+  function handleOperator(op) {
+    // map for display
+    const map = { '+': '+', '-': '-', '×': '×', '÷': '÷', '×²': '^2' };
+    appendToExpr(op);
+  }
+
+  function handlePi() {
+    appendToExpr('π');
+  }
+
+  function handleE() {
+    appendToExpr('e');
+  }
+
+  // Memory operations
+  function memoryClear() {
+    setMemory(0);
+  }
+  function memoryRecall() {
+    appendToExpr(String(memory));
+  }
+  function memoryPlus() {
+    const v = Number(safeEvaluate(expr) || display) || 0;
+    setMemory((m) => m + v);
+  }
+  function memoryMinus() {
+    const v = Number(safeEvaluate(expr) || display) || 0;
+    setMemory((m) => m - v);
+  }
+
+  // UI layout button click handler
+  function onButtonClick(key) {
+    // common keys mapped
+    if (key === 'AC') return handleClear();
+    if (key === 'CE') return handleCE();
+    if (key === '⌫') return handleBackspace();
+    if (key === '=') return handleEquals();
+    if (key === '.') return handleDot();
+    if (['+', '-', '×', '÷', '^'].includes(key)) return handleOperator(key);
+    if (key.match(/^\d$/)) return handleDigit(key);
+
+    // functions
+    if (key === 'sin' || key === 'cos' || key === 'tan' || key === 'sin⁻¹' || key === 'cos⁻¹' || key === 'tan⁻¹') {
+      const map = {
+        'sin': 'sin(',
+        'cos': 'cos(',
+        'tan': 'tan(',
+        'sin⁻¹': 'asin(',
+        'cos⁻¹': 'acos(',
+        'tan⁻¹': 'atan(',
+      };
+      appendToExpr(map[key]);
+      return;
+    }
+
+    if (key === 'ln') return appendToExpr('ln(');
+    if (key === 'log') return appendToExpr('log(');
+    if (key === 'eˣ') return appendToExpr('expE(');
+    if (key === '10ˣ') return appendToExpr('exp10(');
+
+    if (key === 'xʸ') return appendToExpr('**');
+    if (key === 'x²') return appendToExpr('**2');
+    if (key === 'x³') return appendToExpr('**3');
+    if (key === '√x') return appendToExpr('sqrt(');
+    if (key === '³√x') return appendToExpr('cbrt(');
+
+    if (key === 'π') return handlePi();
+    if (key === 'e') return handleE();
+
+    if (key === '1/x' || key === '%' || key === 'n!' || key === '√' || key === '³√' || key === '±' || key === 'Ans' || key === 'EXP') return handleImmediateOp(key);
+
+    // memory
+    if (key === 'MC') return memoryClear();
+    if (key === 'MR') return memoryRecall();
+    if (key === 'M+') return memoryPlus();
+    if (key === 'M-') return memoryMinus();
+
+    // parentheses
+    if (key === '(' || key === ')') return appendToExpr(key);
+
+    // default fallback: append textual token
+    appendToExpr(key);
+  }
+
+  return (
+    <div className="max-w-sm mx-auto p-3">
+      <div className="bg-slate-900 text-white rounded-2xl overflow-hidden shadow-lg">
+        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+          <div>
+            <div className="text-sm font-semibold">Scientific Calculator</div>
+            <div className="text-xs text-slate-400">Keyboard friendly · Deg/Rad · Memory</div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setDegMode(true)}
+              className={`px-3 py-1 rounded-full ${degMode ? 'bg-emerald-500 text-white' : 'bg-slate-800 text-slate-300'}`}>
+              Deg
+            </button>
+            <button
+              onClick={() => setDegMode(false)}
+              className={`px-3 py-1 rounded-full ${!degMode ? 'bg-emerald-500 text-white' : 'bg-slate-800 text-slate-300'}`}>
+              Rad
+            </button>
+          </div>
         </div>
+
+        <div className="p-4">
+          <div className="bg-gradient-to-b from-slate-800 to-slate-900 rounded-lg p-3 min-h-[60px]">
+            <div className="text-slate-400 text-sm truncate">{expr || ''}</div>
+            <div className="text-right text-3xl font-mono mt-1">{display}</div>
+          </div>
+        </div>
+
+        <div className="p-4 grid grid-cols-6 gap-3">
+          {[
+            'sin','cos','tan','sin⁻¹','cos⁻¹','tan⁻¹',
+            'xʸ','x²','x³','√x','³√x','y√x',
+            'ln','log','eˣ','10ˣ','π','e',
+            '(' ,')','1/x','%','n!','RND',
+            'CE','AC','⌫','±','MC','MR',
+            '7','8','9','÷','M+','M-',
+            '4','5','6','×','Ans','EXP',
+            '1','2','3','-','EXP','',
+            '0','.','+','=','','',
+          ].map((k, i) => {
+            // some placeholders to maintain grid
+            if (k === '') return <div key={i} />;
+            const isAccent = k === 'AC';
+            const isEquals = k === '=';
+            return (
+              <button
+                key={i}
+                onClick={() => onButtonClick(k)}
+                className={`py-3 rounded-lg text-sm ${isAccent ? 'bg-red-600 text-white' : isEquals ? 'bg-emerald-400 text-slate-900' : 'bg-slate-800 text-slate-200'}`}>
+                {k}
+              </button>
+            );
+          })}
+        </div>
+
       </div>
-    </header>
-
-    <section class="scicalc__display" aria-label="Calculator display">
-      <div id="scicalc-history" class="scicalc__history"></div>
-      <div id="scicalc-output" class="scicalc__output">0</div>
-    </section>
-
-    <section class="scicalc__keys" aria-label="Calculator keypad">
-      <!-- trig + inverse -->
-      <button data-action="fn" data-fn="sin">sin</button>
-      <button data-action="fn" data-fn="cos">cos</button>
-      <button data-action="fn" data-fn="tan">tan</button>
-      <button data-action="invfn" data-fn="asin">sin⁻¹</button>
-      <button data-action="invfn" data-fn="acos">cos⁻¹</button>
-      <button data-action="invfn" data-fn="atan">tan⁻¹</button>
-
-      <!-- powers / roots -->
-      <button data-action="op" data-op="^">xʸ</button>
-      <button data-action="fn" data-fn="square">x²</button>
-      <button data-action="fn" data-fn="cube">x³</button>
-      <button data-action="fn" data-fn="sqrt">√x</button>
-      <button data-action="fn" data-fn="cuberoot">³√x</button>
-      <button data-action="fn" data-fn="yroot">ʸ√x</button>
-
-      <!-- logs & constants -->
-      <button data-action="fn" data-fn="ln">ln</button>
-      <button data-action="fn" data-fn="log10">log</button>
-      <button data-action="fn" data-fn="exp">eˣ</button>
-      <button data-action="fn" data-fn="pow10">10ˣ</button>
-      <button data-action="const" data-value="PI">π</button>
-      <button data-action="const" data-value="E">e</button>
-
-      <!-- misc -->
-      <button data-action="paren" data-value="(">(</button>
-      <button data-action="paren" data-value=")">)</button>
-      <button data-action="fn" data-fn="inverse">1/x</button>
-      <button data-action="percent">%</button>
-      <button data-action="fn" data-fn="factorial">n!</button>
-      <button data-action="random">RND</button>
-
-      <!-- control row -->
-      <button data-action="clear-entry">CE</button>
-      <button data-action="clear-all" class="danger">AC</button>
-      <button data-action="backspace">⌫</button>
-      <button data-action="sign">±</button>
-      <button data-action="memory-clear">MC</button>
-      <button data-action="memory-recall">MR</button>
-
-      <!-- numbers / ops -->
-      <button data-action="digit" data-value="7">7</button>
-      <button data-action="digit" data-value="8">8</button>
-      <button data-action="digit" data-value="9">9</button>
-      <button data-action="op" data-op="/">÷</button>
-      <button data-action="memory-plus">M+</button>
-      <button data-action="memory-minus">M−</button>
-
-      <button data-action="digit" data-value="4">4</button>
-      <button data-action="digit" data-value="5">5</button>
-      <button data-action="digit" data-value="6">6</button>
-      <button data-action="op" data-op="*">×</button>
-      <button data-action="ans">Ans</button>
-      <button data-action="noop" disabled></button>
-
-      <button data-action="digit" data-value="1">1</button>
-      <button data-action="digit" data-value="2">2</button>
-      <button data-action="digit" data-value="3">3</button>
-      <button data-action="op" data-op="-">−</button>
-      <button data-action="exp-notation">EXP</button>
-      <button data-action="noop" disabled></button>
-
-      <button data-action="digit" data-value="0" class="span-2">0</button>
-      <button data-action="decimal">.</button>
-      <button data-action="op" data-op="+">+</button>
-      <button data-action="equals" class="equals">=</button>
-    </section>
-  </div>
-
-  <script>
-    (() => {
-      const historyEl = document.getElementById("scicalc-history");
-      const outputEl = document.getElementById("scicalc-output");
-      const keysEl = document.querySelector(".scicalc__keys");
-      const angleToggle = document.getElementById("angle-toggle");
-
-      let expression = "";
-      let currentInput = "";
-      let lastAnswer = 0;
-      let memory = 0;
-      let angleMode = "deg";
-      let justEvaluated = false;
-
-      const MAX_LEN = 20;
-
-      function updateDisplay() {
-        historyEl.textContent = expression;
-        outputEl.textContent = currentInput || "0";
-      }
-
-      function toRadians(x) {
-        return angleMode === "deg" ? (x * Math.PI) / 180 : x;
-      }
-
-      function fromRadians(x) {
-        return angleMode === "deg" ? (x * 180) / Math.PI : x;
-      }
-
-      const precedence = { "+":1, "-":1, "*":2, "/":2, "^":3 };
-
-      function isOperator(t) {
-        return ["+","-","*","/","^"].includes(t);
-      }
-
-      function isFunction(t) {
-        return [
-          "sin","cos","tan",
-          "asin","acos","atan",
-          "ln","log10","sqrt","cuberoot",
-          "square","cube","exp","pow10",
-          "inverse","factorial","neg"
-        ].includes(t);
-      }
-
-      function tokenize(expr) {
-        const tokens = [];
-        let num = "";
-        for (let i=0;i<expr.length;i++) {
-          const c = expr[i];
-          if (/d|./.test(c)) {
-            num += c;
-          } else {
-            if (num) { tokens.push(num); num=""; }
-            if ("+-*/^()".includes(c)) {
-              tokens.push(c);
-            } else if (/[A-Za-z]/.test(c)) {
-              let id = c;
-              while (i+1<expr.length && /[A-Za-z0-9]/.test(expr[i+1])) {
-                id += expr[++i];
-              }
-              tokens.push(id);
-            }
-          }
-        }
-        if (num) tokens.push(num);
-        return tokens;
-      }
-
-      function toRPN(tokens) {
-        const out = [];
-        const stack = [];
-        for (let t of tokens) {
-          if (!isNaN(t)) {
-            out.push(t);
-          } else if (t==="PI" || t==="E") {
-            out.push(t);
-          } else if (isFunction(t)) {
-            stack.push(t);
-          } else if (isOperator(t)) {
-            while (stack.length &&
-                   (isOperator(stack[stack.length-1]) || isFunction(stack[stack.length-1])) &&
-                   precedence[stack[stack.length-1]] >= precedence[t]) {
-              out.push(stack.pop());
-            }
-            stack.push(t);
-          } else if (t==="(") {
-            stack.push(t);
-          } else if (t===")") {
-            while (stack.length && stack[stack.length-1] !== "(") {
-              out.push(stack.pop());
-            }
-            stack.pop();
-            if (stack.length && isFunction(stack[stack.length-1])) {
-              out.push(stack.pop());
-            }
-          }
-        }
-        while (stack.length) out.push(stack.pop());
-        return out;
-      }
-
-      function factorial(n) {
-        n = Math.floor(n);
-        if (n < 0) return NaN;
-        let r = 1;
-        for (let i=2;i<=n;i++) r *= i;
-        return r;
-      }
-
-      function evalRPN(rpn) {
-        const stack = [];
-        for (let t of rpn) {
-          if (!isNaN(t)) {
-            stack.push(parseFloat(t));
-          } else if (t==="PI") {
-            stack.push(Math.PI);
-          } else if (t==="E") {
-            stack.push(Math.E);
-          } else if (isOperator(t)) {
-            const b = stack.pop();
-            const a = stack.pop();
-            let v = 0;
-            switch (t) {
-              case "+": v=a+b; break;
-              case "-": v=a-b; break;
-              case "*": v=a*b; break;
-              case "/": v=a/b; break;
-              case "^": v=Math.pow(a,b); break;
-            }
-            stack.push(v);
-          } else if (isFunction(t)) {
-            let v = stack.pop();
-            switch (t) {
-              case "sin": v=Math.sin(toRadians(v)); break;
-              case "cos": v=Math.cos(toRadians(v)); break;
-              case "tan": v=Math.tan(toRadians(v)); break;
-              case "asin": v=fromRadians(Math.asin(v)); break;
-              case "acos": v=fromRadians(Math.acos(v)); break;
-              case "atan": v=fromRadians(Math.atan(v)); break;
-              case "ln": v=Math.log(v); break;
-              case "log10": v=Math.log10(v); break;
-              case "sqrt": v=Math.sqrt(v); break;
-              case "cuberoot": v=Math.cbrt(v); break;
-              case "square": v=v*v; break;
-              case "cube": v=v*v*v; break;
-              case "exp": v=Math.exp(v); break;
-              case "pow10": v=Math.pow(10,v); break;
-              case "inverse": v=1/v; break;
-              case "factorial": v=factorial(v); break;
-              case "neg": v=-v; break;
-            }
-            stack.push(v);
-          }
-        }
-        return stack.pop();
-      }
-
-      function safeEvaluate(expr) {
-        try {
-          const tokens = tokenize(expr);
-          const rpn = toRPN(tokens);
-          let val = evalRPN(rpn);
-          if (!isFinite(val)) return "Error";
-          return Number(val.toPrecision(12)).toString();
-        } catch(e) {
-          return "Error";
-        }
-      }
-
-      function appendToInput(ch) {
-        if (justEvaluated) {
-          currentInput = "";
-          expression = "";
-          justEvaluated = false;
-        }
-        if (currentInput.length >= MAX_LEN) return;
-        if (ch === "." && currentInput.includes(".")) return;
-        if (currentInput === "0" && ch !== ".") currentInput = ch;
-        else currentInput += ch;
-        updateDisplay();
-      }
-
-      function pushCurrentToExpression() {
-        if (currentInput) {
-          expression += currentInput;
-          currentInput = "";
-        }
-      }
-
-      function handleOperator(op) {
-        if (justEvaluated) {
-          expression = lastAnswer.toString();
-          currentInput = "";
-          justEvaluated = false;
-        }
-        if (currentInput === "" && /[+-*/^]$/.test(expression)) {
-          expression = expression.slice(0,-1)+op;
-        } else {
-          pushCurrentToExpression();
-          expression += op;
-        }
-        updateDisplay();
-      }
-
-      function handleFunction(fn) {
-        if (currentInput) {
-          expression += fn + "(" + currentInput + ")";
-          currentInput = "";
-        } else {
-          expression += fn + "(";
-        }
-        updateDisplay();
-      }
-
-      function handleEquals() {
-        pushCurrentToExpression();
-        if (!expression) return;
-        const result = safeEvaluate(expression);
-        historyEl.textContent = expression;
-        outputEl.textContent = result;
-        if (result !== "Error") {
-          lastAnswer = parseFloat(result);
-          currentInput = result;
-        } else {
-          currentInput = "";
-        }
-        expression = "";
-        justEvaluated = true;
-      }
-
-      keysEl.addEventListener("click", (e) => {
-        const btn = e.target.closest("button");
-        if (!btn || btn.disabled) return;
-        const action = btn.dataset.action;
-
-        switch (action) {
-          case "digit":
-            appendToInput(btn.dataset.value);
-            break;
-          case "decimal":
-            appendToInput(".");
-            break;
-          case "op":
-            handleOperator(btn.dataset.op);
-            break;
-          case "paren":
-            if (btn.dataset.value === "(" && currentInput) {
-              expression += currentInput + "*(";
-              currentInput = "";
-            } else {
-              expression += btn.dataset.value;
-            }
-            updateDisplay();
-            break;
-          case "fn":
-            handleFunction(btn.dataset.fn);
-            break;
-          case "invfn":
-            handleFunction(btn.dataset.fn);
-            break;
-          case "const":
-            if (justEvaluated) { expression=""; justEvaluated=false; }
-            if (currentInput) pushCurrentToExpression();
-            expression += btn.dataset.value;
-            updateDisplay();
-            break;
-          case "sign":
-            if (currentInput) {
-              currentInput = currentInput.startsWith("-")
-                ? currentInput.slice(1)
-                : "-" + currentInput;
-            } else {
-              currentInput = "-";
-            }
-            updateDisplay();
-            break;
-          case "percent":
-            if (currentInput) {
-              currentInput = (parseFloat(currentInput)/100).toString();
-              updateDisplay();
-            }
-            break;
-          case "random":
-            currentInput = Math.random().toString().slice(0,10);
-            updateDisplay();
-            break;
-          case "backspace":
-            if (currentInput) currentInput = currentInput.slice(0,-1);
-            else if (expression) expression = expression.slice(0,-1);
-            updateDisplay();
-            break;
-          case "clear-entry":
-            currentInput = "";
-            updateDisplay();
-            break;
-          case "clear-all":
-            expression = "";
-            currentInput = "";
-            updateDisplay();
-            break;
-          case "exp-notation":
-            if (!currentInput) currentInput = "1";
-            currentInput += "e";
-            updateDisplay();
-            break;
-          case "equals":
-            handleEquals();
-            break;
-          case "ans":
-            currentInput = lastAnswer.toString();
-            updateDisplay();
-            break;
-          case "memory-plus":
-            memory += parseFloat(currentInput || lastAnswer || 0);
-            break;
-          case "memory-minus":
-            memory -= parseFloat(currentInput || lastAnswer || 0);
-            break;
-          case "memory-clear":
-            memory = 0;
-            break;
-          case "memory-recall":
-            currentInput = memory.toString();
-            updateDisplay();
-            break;
-        }
-      });
-
-      angleToggle.addEventListener("click", (e) => {
-        const btn = e.target.closest("button[data-angle]");
-        if (!btn) return;
-        angleMode = btn.dataset.angle;
-        angleToggle.querySelectorAll("button[data-angle]").forEach(b =>
-          b.classList.toggle("is-active", b === btn)
-        );
-      });
-
-      window.addEventListener("keydown", (e) => {
-        const k = e.key;
-        if (/^d$/.test(k)) {
-          appendToInput(k);
-        } else if (k === ".") {
-          appendToInput(".");
-        } else if (["+","-","*","/"].includes(k)) {
-          handleOperator(k);
-        } else if (k === "Enter" || k === "=") {
-          e.preventDefault();
-          handleEquals();
-        } else if (k === "Backspace") {
-          e.preventDefault();
-          if (currentInput) currentInput = currentInput.slice(0,-1);
-          updateDisplay();
-        } else if (k === "Escape") {
-          expression = "";
-          currentInput = "";
-          updateDisplay();
-        } else if (k === "(" || k === ")") {
-          expression += k;
-          updateDisplay();
-        }
-      });
-
-      updateDisplay();
-    })();
-  </script>
-</body>
-</html>This single
+    </div>
+  );
+}
+      
