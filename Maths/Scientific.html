@@ -1,51 +1,20 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Scientific Calculator — fixed 6-col mobile layout</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Scientific Calculator — Working Build</title>
 <style>
   :root{
     --page-bg:#ffffff;
     --card-bg:linear-gradient(180deg,#07121a 0%, #05101a 100%);
-    --panel:#07121a;
-    --key:#12202a;
-    --key-hover:#162b34;
-    --accent:#10b981;
-    --accent-600:#05956f;
-    --danger:#dc2626;
-    --muted:#94a3b8;
-    --shadow:0 18px 50px rgba(9,16,23,0.12);
-    font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --key:#12202a; --key-hover:#162b34; --accent:#10b981; --accent-600:#05956f;
+    --danger:#dc2626; --muted:#94a3b8; --shadow:0 18px 50px rgba(9,16,23,0.12);
+    font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
   }
-
-  html,body{height:100%;margin:0;background:var(--page-bg);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
-  /* Outer container centers and gives top spacing so mobile browser chrome doesn't overlap */
-  .page{
-    min-height:100vh;
-    display:flex;
-    align-items:flex-start;
-    justify-content:center;
-    padding:28px 12px 36px;
-    box-sizing:border-box;
-  }
-
-  /* Calculator card */
-  .calc{
-    width:360px;
-    max-width:100%;
-    background:var(--card-bg);
-    border-radius:18px;
-    box-shadow:var(--shadow);
-    color:#e6eef8;
-    overflow:hidden;
-    border:1px solid rgba(255,255,255,0.03);
-    display:flex;
-    flex-direction:column;
-    max-height:calc(100vh - 56px); /* keep within viewport on mobile */
-  }
-
-  /* top header */
+  html,body{height:100%;margin:0;background:var(--page-bg);-webkit-font-smoothing:antialiased}
+  .page{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:28px 12px 36px}
+  .calc{width:360px;max-width:96vw;background:var(--card-bg);border-radius:18px;box-shadow:var(--shadow);color:#e6eef8;overflow:hidden;border:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;max-height:calc(100vh - 56px)}
   .top{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03)}
   .brand{display:flex;flex-direction:column}
   .title{font-size:16px;font-weight:700}
@@ -54,43 +23,26 @@
   .modes button{border:0;padding:7px 12px;border-radius:999px;background:transparent;color:var(--muted);font-weight:700;cursor:pointer}
   .modes .active{background:var(--accent);color:#04201b;box-shadow:0 8px 20px rgba(6,139,107,0.12)}
 
-  /* display area - WHITE background with black text as requested */
   .displayWrap{padding:12px}
-  .display{
-    background:#fff;border-radius:10px;padding:12px;min-height:86px;display:flex;flex-direction:column;justify-content:center;box-sizing:border-box;
-  }
+  .display{background:#fff;border-radius:10px;padding:12px;min-height:86px;display:flex;flex-direction:column;justify-content:center;box-sizing:border-box}
   .expr{color:#23303a;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .value{font-family:ui-monospace,Menlo,Monaco,'Roboto Mono',monospace;font-size:34px;text-align:right;color:#041018;margin-top:6px;word-break:break-all}
 
-  /* keys: 6-column grid to match the screenshots exactly */
-  .keys{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding:12px;box-sizing:border-box;overflow:auto}
-  .key{
-    background:var(--key);border-radius:12px;padding:10px 8px;font-size:14px;border:0;color:#e6f0fb;cursor:pointer;
-    min-height:46px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 -3px 0 rgba(0,0,0,0.25);transition:transform .08s,background .08s;
-  }
+  .keys{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding:12px;box-sizing:border-box;overflow:auto;flex:1}
+  .key{background:var(--key);border-radius:12px;padding:10px 8px;font-size:14px;border:0;color:#e6f0fb;cursor:pointer;min-height:46px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 -3px 0 rgba(0,0,0,0.25);transition:transform .08s,background .08s}
   .key:hover{transform:translateY(-3px);background:var(--key-hover)}
   .key:active{transform:translateY(0);background:var(--key-hover)}
   .key.ac{background:var(--danger);color:white}
   .key.equals{background:linear-gradient(180deg,var(--accent),var(--accent-600));color:#04201b;border-radius:12px;box-shadow:0 10px 30px rgba(6,139,107,0.18)}
   .key.wide{grid-column:span 2}
-  .muted{color:var(--muted);font-size:12px}
-
-  /* bottom status line */
   .status{padding:10px 12px;border-top:1px solid rgba(255,255,255,0.02);display:flex;justify-content:space-between;color:var(--muted);font-size:13px}
 
-  /* responsiveness */
   @media (max-width:380px){
     .calc{width:320px}
     .value{font-size:28px}
     .keys{gap:8px;padding:10px}
     .key{padding:8px;font-size:13px;min-height:40px}
   }
-
-  /* ensure keys container won't push display off-screen on very short viewports - allow internal scroll for keys */
-  .calc .keys{flex:1;overflow:auto}
-  .displayWrap{flex:0 0 auto}
-
-  /* ensure focus styles visible for accessibility */
   .key:focus{outline:3px solid rgba(255,255,255,0.06);outline-offset:3px}
 </style>
 </head>
@@ -108,17 +60,16 @@
         </div>
       </div>
 
-      <!-- display: white background, black text -->
       <div class="displayWrap">
         <div class="display" aria-live="polite">
-          <div id="small" class="expr"></div>
-          <div id="big" class="value">0</div>
+          <div id="exprSmall" class="expr"></div>
+          <div id="exprBig" class="value">0</div>
         </div>
       </div>
 
-      <!-- 6-column grid of keys (matches typical scientific layout in your screenshots) -->
+      <!-- 6-column grid matching your screenshot -->
       <div class="keys" id="keys" role="group" aria-label="Calculator keypad">
-        <!-- Row1 -->
+        <!-- Row 1 -->
         <button class="key" data-key="sin(">sin</button>
         <button class="key" data-key="cos(">cos</button>
         <button class="key" data-key="tan(">tan</button>
@@ -126,7 +77,7 @@
         <button class="key" data-key="acos(">cos⁻¹</button>
         <button class="key" data-key="atan(">tan⁻¹</button>
 
-        <!-- Row2 -->
+        <!-- Row 2 -->
         <button class="key" data-key="^">xʸ</button>
         <button class="key" data-key="^3">x³</button>
         <button class="key" data-key="^2">x²</button>
@@ -134,15 +85,15 @@
         <button class="key" data-key="cbrt(">³√x</button>
         <button class="key" data-key="root(">y√x</button>
 
-        <!-- Row3 -->
+        <!-- Row 3 -->
         <button class="key" data-key="expE(">eˣ</button>
         <button class="key" data-key="exp10(">10ˣ</button>
         <button class="key" data-key="PI">π</button>
         <button class="key" data-key="E">e</button>
-        <button class="key" data-key="(">(</button>
-        <button class="key" data-key=")">)</button>
+        <button class="key" data-key="("> (</button>
+        <button class="key" data-key=")"> )</button>
 
-        <!-- Row4 -->
+        <!-- Row 4 -->
         <button class="key" data-key="1/x">1/x</button>
         <button class="key" data-key="%">%</button>
         <button class="key" data-key="!">n!</button>
@@ -150,7 +101,7 @@
         <button class="key" data-key="ln(">ln</button>
         <button class="key" data-key="log(">log</button>
 
-        <!-- Row5 -->
+        <!-- Row 5 -->
         <button class="key ac" data-key="AC">AC</button>
         <button class="key" data-key="back">⌫</button>
         <button class="key" data-key="neg">±</button>
@@ -158,7 +109,7 @@
         <button class="key" data-key="MC">MC</button>
         <button class="key" data-key="MR">MR</button>
 
-        <!-- Row6 -->
+        <!-- Row 6 -->
         <button class="key" data-key="7">7</button>
         <button class="key" data-key="8">8</button>
         <button class="key" data-key="9">9</button>
@@ -166,7 +117,7 @@
         <button class="key" data-key="M+">M+</button>
         <button class="key" data-key="M-">M-</button>
 
-        <!-- Row7 -->
+        <!-- Row 7 -->
         <button class="key" data-key="4">4</button>
         <button class="key" data-key="5">5</button>
         <button class="key" data-key="6">6</button>
@@ -174,15 +125,15 @@
         <button class="key" data-key="Ans">Ans</button>
         <button class="key" data-key="EXP">EXP</button>
 
-        <!-- Row8 -->
+        <!-- Row 8 -->
         <button class="key" data-key="1">1</button>
         <button class="key" data-key="2">2</button>
         <button class="key" data-key="3">3</button>
         <button class="key" data-key="-">-</button>
         <button class="key" data-key="E_not">E</button>
-        <button class="key" data-key="rnd2" style="visibility:hidden">_</button>
+        <button class="key" style="visibility:hidden">_</button>
 
-        <!-- Row9 (bottom row) -->
+        <!-- Row 9 -->
         <button class="key" data-key="-space">-</button>
         <button class="key wide" data-key="0">0</button>
         <button class="key" data-key=".">.</button>
@@ -192,47 +143,48 @@
       </div>
 
       <div class="status">
-        <div>Memory: <span id="mem">0</span></div>
-        <div>Ans: <span id="ans">0</span></div>
+        <div>Memory: <span id="memVal">0</span></div>
+        <div>Ans: <span id="ansVal">0</span></div>
       </div>
     </div>
   </div>
 
 <script>
-/* Robust tokenizer -> shunting yard -> RPN evaluator (supports functions & postfix)
-   Buttons insert tokens like 'sin(' or 'sqrt(' so functions work reliably.
-   'y√x' sends root( — use root(y,x) format: after pressing root( type 'y, x)'.
+/* Working calculator:
+   - Buttons insert tokens (functions include '('),
+   - Parser: tokenize -> shunting-yard -> RPN evaluator
+   - Supports functions, constants, postfix ! and %, unary -, exponent, Ans, memory, EXP (scientific).
 */
+
 (function(){
-  // UI
-  const small = document.getElementById('small');
-  const big = document.getElementById('big');
+  // UI refs
+  const exprSmall = document.getElementById('exprSmall');
+  const exprBig = document.getElementById('exprBig');
   const keys = document.getElementById('keys');
   const degBtn = document.getElementById('deg');
   const radBtn = document.getElementById('rad');
-  const memEl = document.getElementById('mem');
-  const ansEl = document.getElementById('ans');
+  const memVal = document.getElementById('memVal');
+  const ansVal = document.getElementById('ansVal');
 
   // state
-  let expr = '';
+  let expression = '';
   let memory = 0;
   let ANS = 0;
   let degMode = true;
 
-  // normalize numeric output to avoid floating noise
-  function normalize(n){
-    if(typeof n !== 'number' || !isFinite(n)) return n;
-    return Number.parseFloat(n.toPrecision(12));
+  function normalizeNumber(x){
+    if(typeof x !== 'number' || !isFinite(x)) return x;
+    return Number.parseFloat(x.toPrecision(12));
   }
 
   // Tokenizer
-  function tokenize(s){
-    s = String(s);
+  function tokenize(input){
+    const s = String(input);
     const tokens = [];
-    let i=0;
+    let i = 0;
     const reNum = /^[0-9]+(?:\.[0-9]*)?(?:[eE][+\-]?\d+)?/;
     const reId = /^[A-Za-z_][A-Za-z0-9_]*/;
-    while(i<s.length){
+    while(i < s.length){
       const ch = s[i];
       if(/\s/.test(ch)){ i++; continue; }
       const mNum = s.slice(i).match(reNum);
@@ -243,7 +195,7 @@
       if(ch==='!'){ tokens.push({type:'post',v:'!'}); i++; continue; }
       if(ch==='%'){ tokens.push({type:'post',v:'%'}); i++; continue; }
       if(ch==='π'){ tokens.push({type:'ident',v:'PI'}); i++; continue; }
-      // fallback
+      // fallback unknown char
       tokens.push({type:'unknown',v:ch}); i++;
     }
     return tokens;
@@ -251,23 +203,18 @@
 
   // Shunting-yard -> RPN
   function toRPN(tokens){
-    const out = [], ops = [];
+    const out = []; const ops = [];
     const prec = {'+':2,'-':2,'*':3,'/':3,'^':4};
     const right = {'^':true};
-    function isFunc(t, idx){ return t.type==='ident' && tokens[idx+1] && tokens[idx+1].type==='op' && tokens[idx+1].v==='('; }
+    function isFunc(t,i){ return t.type==='ident' && tokens[i+1] && tokens[i+1].type==='op' && tokens[i+1].v==='('; }
 
     for(let i=0;i<tokens.length;i++){
       const t = tokens[i];
-      if(t.type==='number' || (t.type==='ident' && !isFunc(t,i))) { out.push(t); continue; }
+      if(t.type==='number' || (t.type==='ident' && !isFunc(t,i))){ out.push(t); continue; }
       if(isFunc(t,i)){ ops.push({type:'func',v:t.v}); continue; }
       if(t.type==='op'){
         if(t.v==='('){ ops.push(t); continue; }
-        if(t.v===')'){
-          while(ops.length && !(ops[ops.length-1].type==='op' && ops[ops.length-1].v==='(')) out.push(ops.pop());
-          if(ops.length && ops[ops.length-1].type==='op' && ops[ops.length-1].v==='(') ops.pop();
-          if(ops.length && ops[ops.length-1].type==='func') out.push(ops.pop());
-          continue;
-        }
+        if(t.v===')'){ while(ops.length && !(ops[ops.length-1].type==='op' && ops[ops.length-1].v==='(')) out.push(ops.pop()); if(ops.length && ops[ops.length-1].type==='op' && ops[ops.length-1].v==='(') ops.pop(); if(ops.length && ops[ops.length-1].type==='func') out.push(ops.pop()); continue; }
         // unary minus
         const prev = tokens[i-1];
         if(t.v==='-' && (!prev || (prev.type==='op' && prev.v!===')') || prev.type==='post')){ ops.push({type:'op',v:'u-'}); continue; }
@@ -290,8 +237,8 @@
 
   // Evaluate RPN
   function evalRPN(rpn){
-    const stack = [];
-    const consts = {PI:Math.PI, E:Math.E, Ans:ANS};
+    const st = [];
+    const consts = { PI: Math.PI, E: Math.E, Ans: ANS };
     const funcs = {
       sin:(x)=> degMode ? Math.sin(x*Math.PI/180) : Math.sin(x),
       cos:(x)=> degMode ? Math.cos(x*Math.PI/180) : Math.cos(x),
@@ -305,154 +252,151 @@
       exp10:(x)=> Math.pow(10,x),
       sqrt:(x)=> Math.sqrt(x),
       cbrt:(x)=> Math.cbrt?Math.cbrt(x):Math.pow(x,1/3),
-      root:(y,x)=> Math.pow(x,1/y),
+      root:(y,x)=> Math.pow(x, 1/y),
       rand:()=> Math.random()
     };
 
     for(let t of rpn){
-      if(t.type==='number') stack.push(Number(t.v));
+      if(t.type==='number') st.push(Number(t.v));
       else if(t.type==='ident'){
-        if(t.v in consts) stack.push(consts[t.v]); else stack.push(NaN);
+        st.push(t.v in consts ? consts[t.v] : NaN);
       } else if(t.type==='post'){
         if(t.v==='!'){
-          const a = stack.pop(); const n = Number(a);
-          if(!Number.isInteger(n) || n<0) throw 'factorial';
-          if(n>170) throw 'overflow';
-          let r=1; for(let i=1;i<=n;i++) r*=i; stack.push(r);
+          const a = st.pop(); const n = Number(a);
+          if(!Number.isInteger(n) || n<0) throw new Error('factorial');
+          if(n>170) throw new Error('factorial overflow');
+          let r=1; for(let i=1;i<=n;i++) r*=i; st.push(r);
         } else if(t.v==='%'){
-          const a = stack.pop(); stack.push(Number(a)/100);
-        } else throw 'postfix';
+          const a = st.pop(); st.push(Number(a)/100);
+        }
       } else if(t.type==='op'){
-        if(t.v==='u-'){ const a=stack.pop(); stack.push(-Number(a)); }
+        if(t.v==='u-'){ const a=st.pop(); st.push(-Number(a)); }
         else {
-          const b=stack.pop(); const a=stack.pop();
-          if(t.v==='+') stack.push(Number(a)+Number(b));
-          else if(t.v==='-') stack.push(Number(a)-Number(b));
-          else if(t.v==='*') stack.push(Number(a)*Number(b));
-          else if(t.v==='/'){ if(Number(b)===0) throw 'div0'; stack.push(Number(a)/Number(b)); }
-          else if(t.v==='^') stack.push(Math.pow(Number(a),Number(b)));
-          else throw 'op';
+          const b=st.pop(); const a=st.pop();
+          if(t.v==='+') st.push(Number(a)+Number(b));
+          else if(t.v==='-') st.push(Number(a)-Number(b));
+          else if(t.v==='*') st.push(Number(a)*Number(b));
+          else if(t.v==='/'){ if(Number(b)===0) throw new Error('div0'); st.push(Number(a)/Number(b)); }
+          else if(t.v==='^') st.push(Math.pow(Number(a), Number(b)));
+          else throw new Error('op');
         }
       } else if(t.type==='func'){
         if(t.v==='root'){
-          const x = stack.pop(); const y = stack.pop(); stack.push(funcs.root(Number(y),Number(x)));
-        } else if(t.v==='rand'){ stack.push(funcs.rand()); }
-        else {
-          const a = stack.pop();
-          if(!(t.v in funcs)) throw 'func';
-          stack.push(funcs[t.v](Number(a)));
+          const x = st.pop(); const y = st.pop(); st.push(funcs.root(Number(y),Number(x)));
+        } else {
+          const a = st.pop();
+          if(!(t.v in funcs)) throw new Error('func');
+          st.push(funcs[t.v](Number(a)));
         }
-      } else { stack.push(NaN); }
+      } else {
+        st.push(NaN);
+      }
     }
-    if(stack.length!==1) throw 'syntax';
-    return stack[0];
+    if(st.length !== 1) throw new Error('syntax');
+    return st[0];
   }
 
-  // wrapper evaluate
-  function evaluate(str){
-    if(!str || str.trim()==='') return 0;
-    let s = String(str).replace(/×/g,'*').replace(/÷/g,'/');
-    s = s.replace(/(\d)(PI|Ans|E|\()/g,'$1*$2').replace(/(\))(\d|PI|Ans|E|\()/g,')*$2');
+  // wrapper
+  function prepareAndEval(raw){
+    if(!raw || raw.trim()==='') return 0;
+    let s = String(raw).replace(/×/g,'*').replace(/÷/g,'/');
+    s = s.replace(/(\d)(PI|Ans|E|\()/g,'$1*$2');
+    s = s.replace(/(\))(\d|PI|Ans|E|\()/g,')*$2');
     const tokens = tokenize(s);
     const rpn = toRPN(tokens);
     const val = evalRPN(rpn);
-    return normalize(val);
+    return normalizeNumber(val);
   }
 
-  // UI helpers
-  function update(){
-    small.textContent = expr;
-    big.textContent = expr === '' ? '0' : expr;
-    memEl.textContent = String(memory);
-    ansEl.textContent = String(ANS);
+  function updateUI(){
+    exprSmall.textContent = expression;
+    exprBig.textContent = expression === '' ? '0' : expression;
+    memVal.textContent = String(memory);
+    ansVal.textContent = String(ANS);
   }
 
-  // Button handler
+  // map button key actions to behaviour
   keys.addEventListener('click', (ev)=>{
-    const btn = ev.target.closest('button');
-    if(!btn) return;
-    const k = btn.dataset.key;
-    handle(k);
-    btn.blur();
+    const b = ev.target.closest('button');
+    if(!b) return;
+    const k = b.dataset.key;
+    handleKey(k);
+    b.blur();
   });
 
-  // keyboard support
+  // keyboard support (basic)
   window.addEventListener('keydown', (ev)=>{
-    if(ev.key==='Enter'){ handle('='); ev.preventDefault(); return; }
-    if(ev.key==='Escape'){ handle('AC'); ev.preventDefault(); return; }
-    if(ev.key==='Backspace'){ handle('back'); ev.preventDefault(); return; }
-    if(/[0-9]/.test(ev.key)) { handle(ev.key); return; }
-    if(ev.key==='.') { handle('.'); return; }
-    if(ev.key==='+') { handle('+'); return; }
-    if(ev.key==='-') { handle('-'); return; }
-    if(ev.key==='*') { handle('*'); return; }
-    if(ev.key==='/') { handle('/'); return; }
-    if(ev.key==='^') { handle('^'); return; }
+    if(ev.key === 'Enter'){ handleKey('='); ev.preventDefault(); return; }
+    if(ev.key === 'Escape'){ handleKey('AC'); ev.preventDefault(); return; }
+    if(ev.key === 'Backspace'){ handleKey('back'); ev.preventDefault(); return; }
+    if(/[0-9]/.test(ev.key)) { handleKey(ev.key); return; }
+    if(ev.key === '.') handleKey('.');
+    if(ev.key === '+') handleKey('+');
+    if(ev.key === '-') handleKey('-');
+    if(ev.key === '*') handleKey('*');
+    if(ev.key === '/') handleKey('/');
   });
 
-  function handle(k){
+  function handleKey(k){
     if(k === undefined) return;
     try{
       switch(k){
-        case 'AC': expr=''; update(); break;
+        case 'AC': expression=''; updateUI(); break;
         case 'CE':
-          expr = expr.replace(/\s*([A-Za-z_][A-Za-z0-9_]*|\d+\.?\d*(?:[eE][+\-]?\d+)?|\S)$/, '');
-          update(); break;
-        case 'back': expr = expr.slice(0,-1); update(); break;
+          expression = expression.replace(/\s*([A-Za-z_][A-Za-z0-9_]*|\d+\.?\d*(?:[eE][+\-]?\d+)?|\S)$/, '');
+          updateUI(); break;
+        case 'back': expression = expression.slice(0,-1); updateUI(); break;
         case '=':
           try{
-            const v = evaluate(expr);
-            if(v === 'Error' || Number.isNaN(v)) { big.textContent = 'Error'; }
+            const res = prepareAndEval(expression);
+            if(res === 'Error' || Number.isNaN(res)){ exprBig.textContent = 'Error'; }
             else {
-              const d = normalize(v);
-              ANS = (typeof d === 'number') ? d : Number(d)||0;
-              expr = String(d);
-              small.textContent = '';
-              big.textContent = expr;
-              ansEl.textContent = String(ANS);
+              const display = normalizeNumber(res);
+              ANS = (typeof display === 'number') ? display : Number(display) || 0;
+              expression = String(display);
+              exprSmall.textContent = '';
+              exprBig.textContent = expression;
+              ansVal.textContent = String(ANS);
             }
           } catch(e){
-            big.textContent = 'Error';
+            exprBig.textContent = 'Error';
           }
           break;
         case 'neg':
-          expr = expr.replace(/(\d+\.?\d*(?:[eE][+\-]?\d+)?)$/, (m)=> String(-Number(m)));
-          update(); break;
-        case '1/x':
-          {
-            const v = evaluate(expr);
-            if(v === 'Error' || Number(v)===0) big.textContent='Error';
-            else { const r = normalize(1/Number(v)); ANS = r; expr = String(r); update(); }
-          }
-          break;
-        case '%': expr += '%'; update(); break;
-        case '!': expr += '!'; update(); break;
-        case 'rand': expr = String(Math.random()); update(); break;
-        case 'MC': memory = 0; memEl.textContent = String(memory); break;
-        case 'MR': expr += String(memory); update(); break;
-        case 'M+': { const v=evaluate(expr); if(!(v==='Error')) memory += Number(v); memEl.textContent=String(memory); } break;
-        case 'M-': { const v=evaluate(expr); if(!(v==='Error')) memory -= Number(v); memEl.textContent=String(memory); } break;
-        case 'Ans': expr += 'Ans'; update(); break;
-        case 'EXP': expr += 'e'; update(); break;
-        case 'E_not': expr += 'E'; update(); break;
+          expression = expression.replace(/(\d+\.?\d*(?:[eE][+\-]?\d+)?)$/, (m)=> String(-Number(m)));
+          updateUI(); break;
+        case '1/x': {
+          const v = prepareAndEval(expression);
+          if(v === 'Error' || Number(v)===0) exprBig.textContent='Error'; else { const r = normalizeNumber(1/Number(v)); ANS = r; expression = String(r); updateUI(); }
+        } break;
+        case '%': expression += '%'; updateUI(); break;
+        case '!': expression += '!'; updateUI(); break;
+        case 'rand': expression = String(Math.random()); updateUI(); break;
+        case 'MC': memory = 0; memVal.textContent = String(memory); break;
+        case 'MR': expression += String(memory); updateUI(); break;
+        case 'M+': { const v = prepareAndEval(expression); if(!(v==='Error')) memory += Number(v); memVal.textContent = String(memory); } break;
+        case 'M-': { const v = prepareAndEval(expression); if(!(v==='Error')) memory -= Number(v); memVal.textContent = String(memory); } break;
+        case 'Ans': expression += 'Ans'; updateUI(); break;
+        case 'EXP': expression += 'e'; updateUI(); break;
+        case 'E_not': expression += 'E'; updateUI(); break;
         default:
-          expr += k;
-          update();
+          expression += k;
+          updateUI();
       }
     } catch(e){
-      big.textContent = 'Error';
+      exprBig.textContent = 'Error';
     }
   }
 
   // deg/rad toggle
-  degBtn.addEventListener('click', ()=>{ degMode=true; degBtn.classList.add('active'); degBtn.setAttribute('aria-pressed','true'); radBtn.classList.remove('active'); radBtn.setAttribute('aria-pressed','false'); });
-  radBtn.addEventListener('click', ()=>{ degMode=false; radBtn.classList.add('active'); radBtn.setAttribute('aria-pressed','true'); degBtn.classList.remove('active'); degBtn.setAttribute('aria-pressed','false'); });
+  degBtn.addEventListener('click', ()=>{ degMode = true; degBtn.classList.add('active'); degBtn.setAttribute('aria-pressed','true'); radBtn.classList.remove('active'); radBtn.setAttribute('aria-pressed','false'); });
+  radBtn.addEventListener('click', ()=>{ degMode = false; radBtn.classList.add('active'); radBtn.setAttribute('aria-pressed','true'); degBtn.classList.remove('active'); degBtn.setAttribute('aria-pressed','false'); });
 
-  // initial
-  update();
+  // initial UI
+  updateUI();
 
-  // expose evaluate for quick console tests
-  window.__calc = { evaluate:(s)=>{ try{return evaluate(String(s))}catch(e){return 'Error'} }, state:()=>({expr,memory,ANS,degMode}) };
+  // expose for testing in console
+  window.__calc = { eval: (s)=> { try { return prepareAndEval(String(s)); } catch(e) { return 'Error' } }, state: ()=> ({ expression, memory, ANS, degMode }) };
 
 })();
 </script>
