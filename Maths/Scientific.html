@@ -2,471 +2,457 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Scientific Calculator — Fixed</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Scientific Calculator — fixed 6-col mobile layout</title>
 <style>
   :root{
-    --page-bg: #ffffff;
-    --card-bg: linear-gradient(180deg,#07121a 0%, #06101a 100%);
+    --page-bg:#ffffff;
+    --card-bg:linear-gradient(180deg,#07121a 0%, #05101a 100%);
+    --panel:#07121a;
     --key:#12202a;
     --key-hover:#162b34;
     --accent:#10b981;
     --accent-600:#05956f;
     --danger:#dc2626;
     --muted:#94a3b8;
-    --shadow:0 14px 40px rgba(15,23,42,0.12);
-    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    --shadow:0 18px 50px rgba(9,16,23,0.12);
+    font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   }
-  html,body{height:100%;margin:0;background:var(--page-bg);display:flex;align-items:center;justify-content:center;padding:28px}
-  .calculator{
-    width:360px; max-width:96vw;
+
+  html,body{height:100%;margin:0;background:var(--page-bg);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+  /* Outer container centers and gives top spacing so mobile browser chrome doesn't overlap */
+  .page{
+    min-height:100vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:28px 12px 36px;
+    box-sizing:border-box;
+  }
+
+  /* Calculator card */
+  .calc{
+    width:360px;
+    max-width:100%;
     background:var(--card-bg);
     border-radius:18px;
     box-shadow:var(--shadow);
     color:#e6eef8;
     overflow:hidden;
     border:1px solid rgba(255,255,255,0.03);
-    display:flex;flex-direction:column;
+    display:flex;
+    flex-direction:column;
+    max-height:calc(100vh - 56px); /* keep within viewport on mobile */
   }
-  .top{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.03)}
-  .brand{display:flex;flex-direction:column}
-  .title{font-weight:700;font-size:16px}
-  .subtitle{font-size:12px;color:var(--muted);margin-top:4px}
-  .modeToggle{display:flex;gap:8px}
-  .modeToggle button{border:0;padding:7px 12px;border-radius:999px;background:transparent;color:var(--muted);font-weight:700;cursor:pointer}
-  .modeToggle button.active{background:var(--accent);color:#04201b;box-shadow:0 6px 20px rgba(6,139,107,0.12)}
 
-  /* DISPLAY: white area with black text as requested */
+  /* top header */
+  .top{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03)}
+  .brand{display:flex;flex-direction:column}
+  .title{font-size:16px;font-weight:700}
+  .subtitle{font-size:12px;color:var(--muted);margin-top:4px}
+  .modes{display:flex;gap:8px}
+  .modes button{border:0;padding:7px 12px;border-radius:999px;background:transparent;color:var(--muted);font-weight:700;cursor:pointer}
+  .modes .active{background:var(--accent);color:#04201b;box-shadow:0 8px 20px rgba(6,139,107,0.12)}
+
+  /* display area - WHITE background with black text as requested */
   .displayWrap{padding:12px}
   .display{
-    background:#ffffff;border-radius:10px;padding:12px;min-height:80px;display:flex;flex-direction:column;justify-content:center;
+    background:#fff;border-radius:10px;padding:12px;min-height:86px;display:flex;flex-direction:column;justify-content:center;box-sizing:border-box;
   }
-  .expr{color:#334155;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .result{font-family:ui-monospace, Menlo, Monaco, 'Roboto Mono', monospace;font-size:32px;text-align:right;color:#041018;margin-top:6px;word-break:break-all}
+  .expr{color:#23303a;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .value{font-family:ui-monospace,Menlo,Monaco,'Roboto Mono',monospace;font-size:34px;text-align:right;color:#041018;margin-top:6px;word-break:break-all}
 
-  /* KEYS: 5-column grid for consistent layout */
-  .keys{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:14px}
-  .key{background:var(--key);border-radius:12px;padding:12px;font-size:14px;border:0;color:#e6f0fb;cursor:pointer;display:flex;align-items:center;justify-content:center;min-height:44px;box-shadow:inset 0 -3px 0 rgba(0,0,0,0.25);transition:transform .08s,background .08s}
+  /* keys: 6-column grid to match the screenshots exactly */
+  .keys{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding:12px;box-sizing:border-box;overflow:auto}
+  .key{
+    background:var(--key);border-radius:12px;padding:10px 8px;font-size:14px;border:0;color:#e6f0fb;cursor:pointer;
+    min-height:46px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 -3px 0 rgba(0,0,0,0.25);transition:transform .08s,background .08s;
+  }
   .key:hover{transform:translateY(-3px);background:var(--key-hover)}
   .key:active{transform:translateY(0);background:var(--key-hover)}
   .key.ac{background:var(--danger);color:white}
-  .key.equals{background:linear-gradient(180deg,var(--accent),var(--accent-600));color:#04201b;box-shadow:0 10px 30px rgba(6,139,107,0.18)}
+  .key.equals{background:linear-gradient(180deg,var(--accent),var(--accent-600));color:#04201b;border-radius:12px;box-shadow:0 10px 30px rgba(6,139,107,0.18)}
   .key.wide{grid-column:span 2}
   .muted{color:var(--muted);font-size:12px}
-  .status{padding:10px 14px;border-top:1px solid rgba(255,255,255,0.02);display:flex;justify-content:space-between;color:var(--muted);font-size:13px}
 
+  /* bottom status line */
+  .status{padding:10px 12px;border-top:1px solid rgba(255,255,255,0.02);display:flex;justify-content:space-between;color:var(--muted);font-size:13px}
+
+  /* responsiveness */
   @media (max-width:380px){
-    .calculator{width:320px}
-    .result{font-size:28px}
+    .calc{width:320px}
+    .value{font-size:28px}
     .keys{gap:8px;padding:10px}
-    .key{padding:10px;font-size:13px;min-height:40px}
+    .key{padding:8px;font-size:13px;min-height:40px}
   }
-  .key:focus{outline:3px solid rgba(255,255,255,0.06);outline-offset:2px}
+
+  /* ensure keys container won't push display off-screen on very short viewports - allow internal scroll for keys */
+  .calc .keys{flex:1;overflow:auto}
+  .displayWrap{flex:0 0 auto}
+
+  /* ensure focus styles visible for accessibility */
+  .key:focus{outline:3px solid rgba(255,255,255,0.06);outline-offset:3px}
 </style>
 </head>
 <body>
-  <div class="calculator" role="application" aria-label="Scientific calculator">
-    <div class="top">
-      <div class="brand">
-        <div class="title">Scientific Calculator</div>
-        <div class="subtitle">Keyboard · Deg/Rad · Memory · Precise</div>
+  <div class="page">
+    <div class="calc" role="application" aria-label="Scientific calculator">
+      <div class="top">
+        <div class="brand">
+          <div class="title">Scientific Calculator</div>
+          <div class="subtitle">Keyboard · Deg/Rad · Memory · Precise</div>
+        </div>
+        <div class="modes" role="tablist" aria-label="Angle mode">
+          <button id="deg" class="active" aria-pressed="true">Deg</button>
+          <button id="rad" aria-pressed="false">Rad</button>
+        </div>
       </div>
-      <div class="modeToggle" role="tablist" aria-label="Angle mode">
-        <button id="degBtn" class="active" aria-pressed="true">Deg</button>
-        <button id="radBtn" aria-pressed="false">Rad</button>
+
+      <!-- display: white background, black text -->
+      <div class="displayWrap">
+        <div class="display" aria-live="polite">
+          <div id="small" class="expr"></div>
+          <div id="big" class="value">0</div>
+        </div>
       </div>
-    </div>
 
-    <!-- DISPLAY: WHITE + BLACK text -->
-    <div class="displayWrap">
-      <div class="display" aria-live="polite">
-        <div id="exprSmall" class="expr"></div>
-        <div id="exprBig" class="result">0</div>
+      <!-- 6-column grid of keys (matches typical scientific layout in your screenshots) -->
+      <div class="keys" id="keys" role="group" aria-label="Calculator keypad">
+        <!-- Row1 -->
+        <button class="key" data-key="sin(">sin</button>
+        <button class="key" data-key="cos(">cos</button>
+        <button class="key" data-key="tan(">tan</button>
+        <button class="key" data-key="asin(">sin⁻¹</button>
+        <button class="key" data-key="acos(">cos⁻¹</button>
+        <button class="key" data-key="atan(">tan⁻¹</button>
+
+        <!-- Row2 -->
+        <button class="key" data-key="^">xʸ</button>
+        <button class="key" data-key="^3">x³</button>
+        <button class="key" data-key="^2">x²</button>
+        <button class="key" data-key="sqrt(">√x</button>
+        <button class="key" data-key="cbrt(">³√x</button>
+        <button class="key" data-key="root(">y√x</button>
+
+        <!-- Row3 -->
+        <button class="key" data-key="expE(">eˣ</button>
+        <button class="key" data-key="exp10(">10ˣ</button>
+        <button class="key" data-key="PI">π</button>
+        <button class="key" data-key="E">e</button>
+        <button class="key" data-key="(">(</button>
+        <button class="key" data-key=")">)</button>
+
+        <!-- Row4 -->
+        <button class="key" data-key="1/x">1/x</button>
+        <button class="key" data-key="%">%</button>
+        <button class="key" data-key="!">n!</button>
+        <button class="key" data-key="rand">RND</button>
+        <button class="key" data-key="ln(">ln</button>
+        <button class="key" data-key="log(">log</button>
+
+        <!-- Row5 -->
+        <button class="key ac" data-key="AC">AC</button>
+        <button class="key" data-key="back">⌫</button>
+        <button class="key" data-key="neg">±</button>
+        <button class="key" data-key="CE">CE</button>
+        <button class="key" data-key="MC">MC</button>
+        <button class="key" data-key="MR">MR</button>
+
+        <!-- Row6 -->
+        <button class="key" data-key="7">7</button>
+        <button class="key" data-key="8">8</button>
+        <button class="key" data-key="9">9</button>
+        <button class="key" data-key="/">÷</button>
+        <button class="key" data-key="M+">M+</button>
+        <button class="key" data-key="M-">M-</button>
+
+        <!-- Row7 -->
+        <button class="key" data-key="4">4</button>
+        <button class="key" data-key="5">5</button>
+        <button class="key" data-key="6">6</button>
+        <button class="key" data-key="*">×</button>
+        <button class="key" data-key="Ans">Ans</button>
+        <button class="key" data-key="EXP">EXP</button>
+
+        <!-- Row8 -->
+        <button class="key" data-key="1">1</button>
+        <button class="key" data-key="2">2</button>
+        <button class="key" data-key="3">3</button>
+        <button class="key" data-key="-">-</button>
+        <button class="key" data-key="E_not">E</button>
+        <button class="key" data-key="rnd2" style="visibility:hidden">_</button>
+
+        <!-- Row9 (bottom row) -->
+        <button class="key" data-key="-space">-</button>
+        <button class="key wide" data-key="0">0</button>
+        <button class="key" data-key=".">.</button>
+        <button class="key" data-key="+">+</button>
+        <button class="key equals" data-key="=">=</button>
+        <div></div>
       </div>
-    </div>
 
-    <!-- KEYS: stable 5-column layout -->
-    <div class="keys" id="keys" role="group" aria-label="Calculator buttons">
-      <!-- row1 -->
-      <button class="key" data-key="sin(">sin</button>
-      <button class="key" data-key="cos(">cos</button>
-      <button class="key" data-key="tan(">tan</button>
-      <button class="key" data-key="asin(">sin⁻¹</button>
-      <button class="key" data-key="acos(">cos⁻¹</button>
-
-      <!-- row2 -->
-      <button class="key" data-key="atan(">tan⁻¹</button>
-      <button class="key" data-key="^">xʸ</button>
-      <button class="key" data-key="^2">x²</button>
-      <button class="key" data-key="^3">x³</button>
-      <button class="key" data-key="sqrt(">√x</button>
-
-      <!-- row3 -->
-      <button class="key" data-key="cbrt(">³√x</button>
-      <button class="key" data-key="root(">y√x</button>
-      <button class="key" data-key="ln(">ln</button>
-      <button class="key" data-key="log(">log</button>
-      <button class="key" data-key="expE(">eˣ</button>
-
-      <!-- row4 -->
-      <button class="key" data-key="exp10(">10ˣ</button>
-      <button class="key" data-key="PI">π</button>
-      <button class="key" data-key="E">e</button>
-      <button class="key" data-key="("> ( </button>
-      <button class="key" data-key=")"> ) </button>
-
-      <!-- row5 -->
-      <button class="key" data-key="1/x">1/x</button>
-      <button class="key" data-key="%">%</button>
-      <button class="key" data-key="!">n!</button>
-      <button class="key" data-key="rand">RND</button>
-      <button class="key" data-key="CE">CE</button>
-
-      <!-- row6 -->
-      <button class="key ac" data-key="AC">AC</button>
-      <button class="key" data-key="back">⌫</button>
-      <button class="key" data-key="neg">±</button>
-      <button class="key" data-key="MC">MC</button>
-      <button class="key" data-key="MR">MR</button>
-
-      <!-- row7 -->
-      <button class="key" data-key="7">7</button>
-      <button class="key" data-key="8">8</button>
-      <button class="key" data-key="9">9</button>
-      <button class="key" data-key="/">÷</button>
-      <button class="key" data-key="M+">M+</button>
-
-      <!-- row8 -->
-      <button class="key" data-key="M-">M-</button>
-      <button class="key" data-key="4">4</button>
-      <button class="key" data-key="5">5</button>
-      <button class="key" data-key="6">6</button>
-      <button class="key" data-key="*">×</button>
-
-      <!-- row9 -->
-      <button class="key" data-key="Ans">Ans</button>
-      <button class="key" data-key="EXP">EXP</button>
-      <button class="key" data-key="1">1</button>
-      <button class="key" data-key="2">2</button>
-      <button class="key" data-key="3">3</button>
-
-      <!-- row10 -->
-      <button class="key" data-key="-">-</button>
-      <button class="key wide" data-key="0">0</button>
-      <button class="key" data-key=".">.</button>
-      <button class="key" data-key="+">+</button>
-      <button class="key equals" data-key="=">=</button>
-    </div>
-
-    <div class="status">
-      <div>Memory: <span id="memVal">0</span></div>
-      <div>Ans: <span id="ansVal">0</span></div>
+      <div class="status">
+        <div>Memory: <span id="mem">0</span></div>
+        <div>Ans: <span id="ans">0</span></div>
+      </div>
     </div>
   </div>
 
 <script>
-/* Robust expression engine: tokenize -> shunting-yard -> RPN evaluate
-   Fixes: function token handling and postfix operators; reliable results for trig and top-row functions.
+/* Robust tokenizer -> shunting yard -> RPN evaluator (supports functions & postfix)
+   Buttons insert tokens like 'sin(' or 'sqrt(' so functions work reliably.
+   'y√x' sends root( — use root(y,x) format: after pressing root( type 'y, x)'.
 */
 (function(){
-  // UI refs
-  const exprSmall = document.getElementById('exprSmall');
-  const exprBig = document.getElementById('exprBig');
+  // UI
+  const small = document.getElementById('small');
+  const big = document.getElementById('big');
   const keys = document.getElementById('keys');
-  const degBtn = document.getElementById('degBtn');
-  const radBtn = document.getElementById('radBtn');
-  const memVal = document.getElementById('memVal');
-  const ansVal = document.getElementById('ansVal');
+  const degBtn = document.getElementById('deg');
+  const radBtn = document.getElementById('rad');
+  const memEl = document.getElementById('mem');
+  const ansEl = document.getElementById('ans');
 
   // state
-  let expression = '';
+  let expr = '';
   let memory = 0;
   let ANS = 0;
   let degMode = true;
 
-  // normalize numbers to avoid floating noise
-  function normalizeNumber(x){
-    if(typeof x !== 'number' || !isFinite(x)) return x;
-    return Number.parseFloat(x.toPrecision(12));
+  // normalize numeric output to avoid floating noise
+  function normalize(n){
+    if(typeof n !== 'number' || !isFinite(n)) return n;
+    return Number.parseFloat(n.toPrecision(12));
   }
 
-  // TOKENIZER
-  function tokenize(input){
-    const s = String(input);
+  // Tokenizer
+  function tokenize(s){
+    s = String(s);
     const tokens = [];
-    let i = 0;
-    const reNumber = /^[0-9]+(?:\.[0-9]*)?(?:[eE][+\-]?\d+)?/;
-    const reIdent = /^[A-Za-z_][A-Za-z0-9_]*/;
-    while(i < s.length){
+    let i=0;
+    const reNum = /^[0-9]+(?:\.[0-9]*)?(?:[eE][+\-]?\d+)?/;
+    const reId = /^[A-Za-z_][A-Za-z0-9_]*/;
+    while(i<s.length){
       const ch = s[i];
       if(/\s/.test(ch)){ i++; continue; }
-      // number
-      const mNum = s.slice(i).match(reNumber);
-      if(mNum){ tokens.push({type:'number', value:mNum[0]}); i += mNum[0].length; continue; }
-      // identifier (functions/constants)
-      const mId = s.slice(i).match(reIdent);
-      if(mId){ tokens.push({type:'ident', value:mId[0]}); i += mId[0].length; continue; }
-      // single char operator/paren/comma
-      if(ch === '+'||ch === '-'||ch === '*'||ch === '/'||ch === '^'||ch === '('||ch === ')'||ch === ','){
-        tokens.push({type:'op', value:ch}); i++; continue;
-      }
-      if(ch === '!'){ tokens.push({type:'postfix', value:'!'}); i++; continue; }
-      if(ch === '%'){ tokens.push({type:'postfix', value:'%'}); i++; continue; }
-      if(ch === 'π' || ch === 'Π'){ tokens.push({type:'ident', value:'PI'}); i++; continue; }
-      // fallback: treat single char as unknown token
-      tokens.push({type:'unknown', value:ch});
-      i++;
+      const mNum = s.slice(i).match(reNum);
+      if(mNum){ tokens.push({type:'number',v:mNum[0]}); i += mNum[0].length; continue; }
+      const mId = s.slice(i).match(reId);
+      if(mId){ tokens.push({type:'ident',v:mId[0]}); i += mId[0].length; continue; }
+      if(ch==='+'||ch==='-'||ch==='*'||ch==='/'||ch==='^'||ch==='('||ch===')'||ch===','){ tokens.push({type:'op',v:ch}); i++; continue; }
+      if(ch==='!'){ tokens.push({type:'post',v:'!'}); i++; continue; }
+      if(ch==='%'){ tokens.push({type:'post',v:'%'}); i++; continue; }
+      if(ch==='π'){ tokens.push({type:'ident',v:'PI'}); i++; continue; }
+      // fallback
+      tokens.push({type:'unknown',v:ch}); i++;
     }
     return tokens;
   }
 
-  // SHUNTING-YARD -> RPN
+  // Shunting-yard -> RPN
   function toRPN(tokens){
-    const out = [];
-    const ops = [];
-    const prec = { '+':2, '-':2, '*':3, '/':3, '^':4 };
-    const rightAssoc = { '^': true };
+    const out = [], ops = [];
+    const prec = {'+':2,'-':2,'*':3,'/':3,'^':4};
+    const right = {'^':true};
+    function isFunc(t, idx){ return t.type==='ident' && tokens[idx+1] && tokens[idx+1].type==='op' && tokens[idx+1].v==='('; }
 
     for(let i=0;i<tokens.length;i++){
       const t = tokens[i];
-      if(t.type === 'number' || (t.type === 'ident' && !isFunctionLike(t,i,tokens))){
-        out.push(t);
-      } else if(t.type === 'ident' && isFunctionLike(t,i,tokens)){
-        // function: push as func token
-        ops.push({type:'func', value:t.value});
-      } else if(t.type === 'op'){
-        if(t.value === '('){
-          ops.push(t);
-        } else if(t.value === ')'){
-          while(ops.length && !(ops[ops.length-1].type === 'op' && ops[ops.length-1].value === '(')){
-            out.push(ops.pop());
-          }
-          if(ops.length && ops[ops.length-1].type === 'op' && ops[ops.length-1].value === '(') ops.pop();
-          if(ops.length && ops[ops.length-1].type === 'func') out.push(ops.pop());
-        } else {
-          // unary minus detection (if '-' and prev is start or operator or '(')
-          const prev = tokens[i-1];
-          if(t.value === '-' && (!prev || (prev.type === 'op' && prev.value !== ')') || prev.type === 'postfix')){
-            ops.push({type:'op', value:'u-'});
-            continue;
-          }
-          while(ops.length){
-            const top = ops[ops.length-1];
-            if(top.type === 'op' && top.value !== '('){
-              const tp = prec[top.value] || 0;
-              const cp = prec[t.value] || 0;
-              if((!rightAssoc[t.value] && cp <= tp) || (rightAssoc[t.value] && cp < tp)){
-                out.push(ops.pop());
-                continue;
-              }
-            } else if(top.type === 'func'){
-              out.push(ops.pop());
-              continue;
-            }
-            break;
-          }
-          ops.push(t);
+      if(t.type==='number' || (t.type==='ident' && !isFunc(t,i))) { out.push(t); continue; }
+      if(isFunc(t,i)){ ops.push({type:'func',v:t.v}); continue; }
+      if(t.type==='op'){
+        if(t.v==='('){ ops.push(t); continue; }
+        if(t.v===')'){
+          while(ops.length && !(ops[ops.length-1].type==='op' && ops[ops.length-1].v==='(')) out.push(ops.pop());
+          if(ops.length && ops[ops.length-1].type==='op' && ops[ops.length-1].v==='(') ops.pop();
+          if(ops.length && ops[ops.length-1].type==='func') out.push(ops.pop());
+          continue;
         }
-      } else if(t.type === 'postfix'){
-        // push postfix directly to output (so they apply to last value)
-        out.push(t);
-      } else {
-        // unknown -> push raw
-        out.push(t);
+        // unary minus
+        const prev = tokens[i-1];
+        if(t.v==='-' && (!prev || (prev.type==='op' && prev.v!===')') || prev.type==='post')){ ops.push({type:'op',v:'u-'}); continue; }
+        while(ops.length){
+          const top = ops[ops.length-1];
+          if(top.type==='op' && top.v!=='('){
+            const tp = prec[top.v]||0, cp = prec[t.v]||0;
+            if((!right[t.v] && cp <= tp) || (right[t.v] && cp < tp)){ out.push(ops.pop()); continue; }
+          } else if(top.type==='func'){ out.push(ops.pop()); continue; }
+          break;
+        }
+        ops.push(t); continue;
       }
+      if(t.type==='post'){ out.push(t); continue; }
+      out.push(t);
     }
     while(ops.length) out.push(ops.pop());
     return out;
   }
 
-  function isFunctionLike(token, index, tokens){
-    // function if ident and next non-space token is '('
-    const next = tokens[index+1];
-    return !!(next && next.type === 'op' && next.value === '(');
-  }
-
-  // RPN EVALUATOR
-  function evaluateRPN(rpn){
-    const st = [];
-    const consts = { PI: Math.PI, E: Math.E, Ans: ANS };
+  // Evaluate RPN
+  function evalRPN(rpn){
+    const stack = [];
+    const consts = {PI:Math.PI, E:Math.E, Ans:ANS};
     const funcs = {
-      sin: (x)=> degMode ? Math.sin(x*Math.PI/180) : Math.sin(x),
-      cos: (x)=> degMode ? Math.cos(x*Math.PI/180) : Math.cos(x),
-      tan: (x)=> degMode ? Math.tan(x*Math.PI/180) : Math.tan(x),
-      asin: (x)=> degMode ? Math.asin(x)*180/Math.PI : Math.asin(x),
-      acos: (x)=> degMode ? Math.acos(x)*180/Math.PI : Math.acos(x),
-      atan: (x)=> degMode ? Math.atan(x)*180/Math.PI : Math.atan(x),
-      ln: (x)=> Math.log(x),
-      log: (x)=> (Math.log10 ? Math.log10(x) : Math.log(x)/Math.LN10),
-      expE: (x)=> Math.exp(x),
-      exp10: (x)=> Math.pow(10,x),
-      sqrt: (x)=> Math.sqrt(x),
-      cbrt: (x)=> Math.cbrt ? Math.cbrt(x) : Math.pow(x,1/3),
-      root: (y,x)=> Math.pow(x, 1/y),
-      rand: ()=> Math.random()
+      sin:(x)=> degMode ? Math.sin(x*Math.PI/180) : Math.sin(x),
+      cos:(x)=> degMode ? Math.cos(x*Math.PI/180) : Math.cos(x),
+      tan:(x)=> degMode ? Math.tan(x*Math.PI/180) : Math.tan(x),
+      asin:(x)=> degMode ? Math.asin(x)*180/Math.PI : Math.asin(x),
+      acos:(x)=> degMode ? Math.acos(x)*180/Math.PI : Math.acos(x),
+      atan:(x)=> degMode ? Math.atan(x)*180/Math.PI : Math.atan(x),
+      ln:(x)=> Math.log(x),
+      log:(x)=> (Math.log10?Math.log10(x):Math.log(x)/Math.LN10),
+      expE:(x)=> Math.exp(x),
+      exp10:(x)=> Math.pow(10,x),
+      sqrt:(x)=> Math.sqrt(x),
+      cbrt:(x)=> Math.cbrt?Math.cbrt(x):Math.pow(x,1/3),
+      root:(y,x)=> Math.pow(x,1/y),
+      rand:()=> Math.random()
     };
 
-    for(let i=0;i<rpn.length;i++){
-      const t = rpn[i];
-      if(t.type === 'number'){ st.push(Number(t.value)); }
-      else if(t.type === 'ident'){
-        const name = t.value;
-        if(name in consts) st.push(consts[name]);
-        else st.push(NaN);
-      } else if(t.type === 'postfix'){
-        if(t.value === '!'){
-          const a = st.pop();
-          const n = Number(a);
-          if(!Number.isInteger(n) || n < 0) throw new Error('factorial');
-          if(n > 170) throw new Error('factorial overflow');
-          let f=1; for(let k=1;k<=n;k++) f *= k;
-          st.push(f);
-        } else if(t.value === '%'){
-          const a = st.pop();
-          st.push(Number(a)/100);
-        } else throw new Error('postfix');
-      } else if(t.type === 'op'){
-        if(t.value === 'u-'){ const a = st.pop(); st.push(-Number(a)); }
+    for(let t of rpn){
+      if(t.type==='number') stack.push(Number(t.v));
+      else if(t.type==='ident'){
+        if(t.v in consts) stack.push(consts[t.v]); else stack.push(NaN);
+      } else if(t.type==='post'){
+        if(t.v==='!'){
+          const a = stack.pop(); const n = Number(a);
+          if(!Number.isInteger(n) || n<0) throw 'factorial';
+          if(n>170) throw 'overflow';
+          let r=1; for(let i=1;i<=n;i++) r*=i; stack.push(r);
+        } else if(t.v==='%'){
+          const a = stack.pop(); stack.push(Number(a)/100);
+        } else throw 'postfix';
+      } else if(t.type==='op'){
+        if(t.v==='u-'){ const a=stack.pop(); stack.push(-Number(a)); }
         else {
-          const b = st.pop(); const a = st.pop();
-          if(t.value === '+') st.push(Number(a)+Number(b));
-          else if(t.value === '-') st.push(Number(a)-Number(b));
-          else if(t.value === '*') st.push(Number(a)*Number(b));
-          else if(t.value === '/'){ if(Number(b)===0) throw new Error('div0'); st.push(Number(a)/Number(b)); }
-          else if(t.value === '^') st.push(Math.pow(Number(a), Number(b)));
-          else throw new Error('op');
+          const b=stack.pop(); const a=stack.pop();
+          if(t.v==='+') stack.push(Number(a)+Number(b));
+          else if(t.v==='-') stack.push(Number(a)-Number(b));
+          else if(t.v==='*') stack.push(Number(a)*Number(b));
+          else if(t.v==='/'){ if(Number(b)===0) throw 'div0'; stack.push(Number(a)/Number(b)); }
+          else if(t.v==='^') stack.push(Math.pow(Number(a),Number(b)));
+          else throw 'op';
         }
-      } else if(t.type === 'func'){
-        const name = t.value;
-        if(name === 'root'){
-          const x = st.pop(); const y = st.pop(); st.push(funcs.root(Number(y),Number(x)));
-        } else if(name === 'rand'){ st.push(funcs.rand()); }
+      } else if(t.type==='func'){
+        if(t.v==='root'){
+          const x = stack.pop(); const y = stack.pop(); stack.push(funcs.root(Number(y),Number(x)));
+        } else if(t.v==='rand'){ stack.push(funcs.rand()); }
         else {
-          const a = st.pop();
-          if(!(name in funcs)) throw new Error('func');
-          st.push(funcs[name](Number(a)));
+          const a = stack.pop();
+          if(!(t.v in funcs)) throw 'func';
+          stack.push(funcs[t.v](Number(a)));
         }
-      } else {
-        // unknown token — push NaN
-        st.push(NaN);
-      }
+      } else { stack.push(NaN); }
     }
-
-    if(st.length !== 1) throw new Error('syntax');
-    return st[0];
+    if(stack.length!==1) throw 'syntax';
+    return stack[0];
   }
 
-  // Full evaluate wrapper
-  function prepareAndEvaluate(raw){
-    if(!raw || raw.trim()==='') return 0;
-    // small sanitizations
-    let s = String(raw).replace(/×/g,'*').replace(/÷/g,'/');
-    // handle implicit multiplication like 2PI or )(
+  // wrapper evaluate
+  function evaluate(str){
+    if(!str || str.trim()==='') return 0;
+    let s = String(str).replace(/×/g,'*').replace(/÷/g,'/');
     s = s.replace(/(\d)(PI|Ans|E|\()/g,'$1*$2').replace(/(\))(\d|PI|Ans|E|\()/g,')*$2');
-    // Tokenize
     const tokens = tokenize(s);
     const rpn = toRPN(tokens);
-    return normalizeNumber(evaluateRPN(rpn));
+    const val = evalRPN(rpn);
+    return normalize(val);
   }
 
-  // UI updates
-  function updateUI(){
-    exprSmall.textContent = expression;
-    exprBig.textContent = expression === '' ? '0' : expression;
-    memVal.textContent = String(memory);
-    ansVal.textContent = String(ANS);
+  // UI helpers
+  function update(){
+    small.textContent = expr;
+    big.textContent = expr === '' ? '0' : expr;
+    memEl.textContent = String(memory);
+    ansEl.textContent = String(ANS);
   }
 
-  // Button handling
+  // Button handler
   keys.addEventListener('click', (ev)=>{
-    const b = ev.target.closest('button');
-    if(!b) return;
-    const k = b.dataset.key;
-    handleKey(k);
-    b.blur();
+    const btn = ev.target.closest('button');
+    if(!btn) return;
+    const k = btn.dataset.key;
+    handle(k);
+    btn.blur();
   });
 
-  // Keyboard support
+  // keyboard support
   window.addEventListener('keydown', (ev)=>{
-    if(ev.key === 'Enter'){ handleKey('='); ev.preventDefault(); return; }
-    if(ev.key === 'Escape'){ handleKey('AC'); ev.preventDefault(); return; }
-    if(ev.key === 'Backspace'){ handleKey('back'); ev.preventDefault(); return; }
-    if(/[0-9]/.test(ev.key)) { handleKey(ev.key); return; }
-    if(ev.key === '.') { handleKey('.'); return; }
-    if(ev.key === '+') { handleKey('+'); return; }
-    if(ev.key === '-') { handleKey('-'); return; }
-    if(ev.key === '*') { handleKey('*'); return; }
-    if(ev.key === '/') { handleKey('/'); return; }
-    if(ev.key === '^') { handleKey('^'); return; }
+    if(ev.key==='Enter'){ handle('='); ev.preventDefault(); return; }
+    if(ev.key==='Escape'){ handle('AC'); ev.preventDefault(); return; }
+    if(ev.key==='Backspace'){ handle('back'); ev.preventDefault(); return; }
+    if(/[0-9]/.test(ev.key)) { handle(ev.key); return; }
+    if(ev.key==='.') { handle('.'); return; }
+    if(ev.key==='+') { handle('+'); return; }
+    if(ev.key==='-') { handle('-'); return; }
+    if(ev.key==='*') { handle('*'); return; }
+    if(ev.key==='/') { handle('/'); return; }
+    if(ev.key==='^') { handle('^'); return; }
   });
 
-  function handleKey(k){
+  function handle(k){
     if(k === undefined) return;
     try{
       switch(k){
-        case 'AC': expression=''; updateUI(); break;
+        case 'AC': expr=''; update(); break;
         case 'CE':
-          expression = expression.replace(/\s*([A-Za-z_][A-Za-z0-9_]*|\d+\.?\d*(?:[eE][+\-]?\d+)?|\S)$/, '');
-          updateUI();
-          break;
-        case 'back': expression = expression.slice(0,-1); updateUI(); break;
+          expr = expr.replace(/\s*([A-Za-z_][A-Za-z0-9_]*|\d+\.?\d*(?:[eE][+\-]?\d+)?|\S)$/, '');
+          update(); break;
+        case 'back': expr = expr.slice(0,-1); update(); break;
         case '=':
           try{
-            const val = prepareAndEvaluate(expression);
-            if(val === 'Error' || Number.isNaN(val)){ exprBig.textContent='Error'; }
+            const v = evaluate(expr);
+            if(v === 'Error' || Number.isNaN(v)) { big.textContent = 'Error'; }
             else {
-              const display = normalizeNumber(val);
-              ANS = (typeof display === 'number') ? display : Number(display)||0;
-              expression = String(display);
-              exprSmall.textContent = '';
-              exprBig.textContent = expression;
-              ansVal.textContent = String(ANS);
+              const d = normalize(v);
+              ANS = (typeof d === 'number') ? d : Number(d)||0;
+              expr = String(d);
+              small.textContent = '';
+              big.textContent = expr;
+              ansEl.textContent = String(ANS);
             }
           } catch(e){
-            exprBig.textContent = 'Error';
+            big.textContent = 'Error';
           }
           break;
         case 'neg':
-          expression = expression.replace(/(\d+\.?\d*(?:[eE][+\-]?\d+)?)$/,(m)=> String(-Number(m)));
-          updateUI();
-          break;
+          expr = expr.replace(/(\d+\.?\d*(?:[eE][+\-]?\d+)?)$/, (m)=> String(-Number(m)));
+          update(); break;
         case '1/x':
           {
-            const v = prepareAndEvaluate(expression);
-            if(v === 'Error' || Number(v) === 0) { exprBig.textContent='Error'; }
-            else { const r = normalizeNumber(1/Number(v)); ANS = r; expression = String(r); updateUI(); exprBig.textContent=expression; }
+            const v = evaluate(expr);
+            if(v === 'Error' || Number(v)===0) big.textContent='Error';
+            else { const r = normalize(1/Number(v)); ANS = r; expr = String(r); update(); }
           }
           break;
-        case '%': expression += '%'; updateUI(); break;
-        case '!': expression += '!'; updateUI(); break;
-        case 'rand': expression = String(Math.random()); updateUI(); break;
-        case 'MC': memory = 0; memVal.textContent = String(memory); break;
-        case 'MR': expression += String(memory); updateUI(); break;
-        case 'M+': { const v = prepareAndEvaluate(expression); if(!(v==='Error')) memory += Number(v); memVal.textContent=String(memory); } break;
-        case 'M-': { const v = prepareAndEvaluate(expression); if(!(v==='Error')) memory -= Number(v); memVal.textContent=String(memory); } break;
-        case 'Ans': expression += 'Ans'; updateUI(); break;
-        case 'EXP': expression += 'e'; updateUI(); break;
-        case 'E_not': expression += 'E'; updateUI(); break;
+        case '%': expr += '%'; update(); break;
+        case '!': expr += '!'; update(); break;
+        case 'rand': expr = String(Math.random()); update(); break;
+        case 'MC': memory = 0; memEl.textContent = String(memory); break;
+        case 'MR': expr += String(memory); update(); break;
+        case 'M+': { const v=evaluate(expr); if(!(v==='Error')) memory += Number(v); memEl.textContent=String(memory); } break;
+        case 'M-': { const v=evaluate(expr); if(!(v==='Error')) memory -= Number(v); memEl.textContent=String(memory); } break;
+        case 'Ans': expr += 'Ans'; update(); break;
+        case 'EXP': expr += 'e'; update(); break;
+        case 'E_not': expr += 'E'; update(); break;
         default:
-          // append token as-is (functions include '(' on buttons)
-          expression += k;
-          updateUI();
+          expr += k;
+          update();
       }
     } catch(e){
-      // any unexpected runtime error -> show Error, don't crash
-      exprBig.textContent = 'Error';
+      big.textContent = 'Error';
     }
   }
 
   // deg/rad toggle
-  degBtn.addEventListener('click', ()=>{ degMode = true; degBtn.classList.add('active'); degBtn.setAttribute('aria-pressed','true'); radBtn.classList.remove('active'); radBtn.setAttribute('aria-pressed','false'); });
-  radBtn.addEventListener('click', ()=>{ degMode = false; radBtn.classList.add('active'); radBtn.setAttribute('aria-pressed','true'); degBtn.classList.remove('active'); degBtn.setAttribute('aria-pressed','false'); });
+  degBtn.addEventListener('click', ()=>{ degMode=true; degBtn.classList.add('active'); degBtn.setAttribute('aria-pressed','true'); radBtn.classList.remove('active'); radBtn.setAttribute('aria-pressed','false'); });
+  radBtn.addEventListener('click', ()=>{ degMode=false; radBtn.classList.add('active'); radBtn.setAttribute('aria-pressed','true'); degBtn.classList.remove('active'); degBtn.setAttribute('aria-pressed','false'); });
 
-  // initial display
-  updateUI();
+  // initial
+  update();
 
-  // expose evaluate for debugging if needed
-  window.__calc = { evaluate: (s)=> { try { return prepareAndEvaluate(String(s)); } catch(e) { return 'Error' } } };
+  // expose evaluate for quick console tests
+  window.__calc = { evaluate:(s)=>{ try{return evaluate(String(s))}catch(e){return 'Error'} }, state:()=>({expr,memory,ANS,degMode}) };
 
 })();
 </script>
