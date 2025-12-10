@@ -3,76 +3,100 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Scientific Calculator</title>
+  <title>Scientific Calculator — World Class</title>
   <style>
     :root{
-      --bg:#0f1720; /* very dark */
+      --page-bg: #ffffff; /* outer white background requested */
+      --card-bg: linear-gradient(180deg,#0b1220 0%, #06121a 100%);
       --panel:#0b1220;
       --key:#14202b;
-      --key-pressed:#0b3b3b;
+      --key-hover:#162b34;
       --accent:#10b981; /* emerald */
+      --accent-700:#05956f;
       --danger:#dc2626; /* red */
       --muted:#94a3b8;
-      --display:#0b1220;
+      --glass: rgba(255,255,255,0.03);
+      --shadow: 0 12px 40px rgba(3,9,23,0.12), inset 0 1px 0 rgba(255,255,255,0.02);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     }
-    html,body{height:100%;margin:0;background:linear-gradient(180deg,#07101a 0%, #07121a 100%);display:flex;align-items:center;justify-content:center}
+
+    html,body{height:100%;margin:0;background:var(--page-bg);display:flex;align-items:center;justify-content:center;padding:32px}
+
+    /* Container card */
     .calculator{
-      width:380px;
-      background:linear-gradient(180deg,#071421 0%, #07121a 100%);
+      width:420px;
+      max-width:95vw;
+      background:var(--card-bg);
       border-radius:18px;
-      box-shadow: 0 10px 30px rgba(2,6,23,0.6);
+      box-shadow:var(--shadow);
       color:#e6eef8;
       overflow:hidden;
-      border:1px solid rgba(255,255,255,0.02);
+      border:1px solid rgba(255,255,255,0.04);
+      transform:translateZ(0);
+      display:flex;flex-direction:column;
     }
-    .header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid rgba(255,255,255,0.03)}
-    .title{font-weight:600}
-    .subtitle{font-size:12px;color:var(--muted);}
+
+    .topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid rgba(255,255,255,0.03)}
+    .brand{display:flex;flex-direction:column}
+    .title{font-weight:700;font-size:16px}
+    .subtitle{font-size:12px;color:var(--muted);margin-top:3px}
+
     .mode-toggle{display:flex;gap:8px}
-    .mode-toggle button{padding:6px 10px;border-radius:999px;border:0;background:transparent;color:var(--muted);cursor:pointer}
-    .mode-toggle .active{background:var(--accent);color:#04201b}
+    .mode-toggle button{padding:8px 12px;border-radius:999px;border:0;background:transparent;color:var(--muted);cursor:pointer;font-weight:600}
+    .mode-toggle .active{background:var(--accent);color:#03261f;box-shadow:0 4px 12px rgba(6,139,107,0.12)}
 
-    .display-area{padding:14px}
-    .expr{background:linear-gradient(180deg,#071019,#08121a);padding:10px;border-radius:10px;min-height:72px;display:flex;flex-direction:column;justify-content:center}
-    .small{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .big{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Roboto Mono,monospace;font-size:32px;text-align:right}
+    .display-area{padding:18px}
+    .display-card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:14px;border-radius:12px;min-height:78px;display:flex;flex-direction:column;justify-content:center}
+    .expr{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .value{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Roboto Mono,monospace;font-size:36px;text-align:right;margin-top:6px}
 
-    .keys{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding:16px}
-    .key{background:var(--key);border-radius:12px;padding:12px;font-size:15px;border:0;color:#dbeafe;cursor:pointer;box-shadow:inset 0 -2px 0 rgba(0,0,0,0.2)}
-    .key:active{transform:translateY(1px)}
+    .keys{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;padding:18px}
+    .key{background:var(--key);border-radius:12px;padding:14px;font-size:15px;border:0;color:#e6f0fb;cursor:pointer;box-shadow:inset 0 -2px 0 rgba(0,0,0,0.25);transition:all .12s}
+    .key:hover{transform:translateY(-2px);background:var(--key-hover)}
+    .key:active{transform:translateY(0)}
     .key.ac{background:var(--danger);color:white}
-    .key.equals{background:linear-gradient(180deg,var(--accent),#06ad89);color:#04201b;grid-column:6/span1}
+    .key.equals{background:linear-gradient(180deg,var(--accent),var(--accent-700));color:#03261f;grid-column:6/span1;box-shadow:0 8px 18px rgba(6,139,107,0.2)}
     .key.wide{grid-column:span 2}
-    .key.small{font-size:13px}
     .muted{color:var(--muted);font-size:13px}
 
-    /* responsive shrink */
-    @media (max-width:420px){
-      .calculator{width:340px}
-      .big{font-size:28px}
+    /* small label under keys for secondary functions */
+    .key .sub{display:block;font-size:11px;color:rgba(255,255,255,0.6);margin-top:6px}
+
+    /* responsive */
+    @media (max-width:480px){
+      .value{font-size:28px}
+      .keys{gap:8px;padding:12px}
+      .key{padding:10px;font-size:14px}
     }
 
-    footer{color:var(--muted);font-size:12px;padding:8px 12px;text-align:center}
+    /* footer note to sit on white page */
+    .credit{padding:10px 0 0 0;text-align:center;color:#334155;font-size:13px}
   </style>
 </head>
 <body>
+  <div style="text-align:center;margin-bottom:12px">
+    <!-- simple heading to show world-class product feel on white background -->
+    <h2 style="margin:0;font-family:Inter,system-ui;font-weight:700;color:#0f172a">Professional Scientific Calculator</h2>
+    <div style="color:#475569;margin-top:6px;font-size:13px">Accurate, fast and reliable calculations — polished UI</div>
+  </div>
+
   <div class="calculator" role="application" aria-label="Scientific calculator">
-    <div class="header">
-      <div>
+    <div class="topbar">
+      <div class="brand">
         <div class="title">Scientific Calculator</div>
-        <div class="subtitle">Keyboard friendly · Deg/Rad · Memory</div>
+        <div class="subtitle">Keyboard · Deg/Rad · Memory · Precise</div>
       </div>
-      <div class="mode-toggle">
-        <button id="degBtn" class="active">Deg</button>
-        <button id="radBtn">Rad</button>
+
+      <div class="mode-toggle" role="tablist" aria-label="Angle mode">
+        <button id="degBtn" class="active" aria-pressed="true">Deg</button>
+        <button id="radBtn" aria-pressed="false">Rad</button>
       </div>
     </div>
 
     <div class="display-area">
-      <div class="expr">
-        <div id="exprSmall" class="small"></div>
-        <div id="exprBig" class="big">0</div>
+      <div class="display-card">
+        <div id="exprSmall" class="expr" aria-live="polite"></div>
+        <div id="exprBig" class="value" aria-live="assertive">0</div>
       </div>
     </div>
 
@@ -105,7 +129,7 @@
       <button class="key" data-key="(">(</button>
       <button class="key" data-key=")">)</button>
       <button class="key" data-key="1/x">1/x</button>
-      <button class="key" data-key="%">%</button>
+      <button class="key" data-key="percent">%</button>
       <button class="key" data-key="fact">n!</button>
       <button class="key" data-key="rand">RND</button>
 
@@ -148,150 +172,193 @@
       <button class="key equals" data-key="=">=</button>
     </div>
 
-    <footer>Built-in functions: sin, cos, tan, ln, log(10), sqrt, cbrt, factorial, percent, memory, Ans</footer>
+    <div style="padding:14px 18px;border-top:1px solid rgba(255,255,255,0.02);background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);">
+      <div style="display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px">
+        <div>Memory: <span id="memVal">0</span></div>
+        <div>Ans: <span id="ansVal">0</span></div>
+      </div>
+    </div>
   </div>
+
+  <div class="credit">Tip: Use keyboard — numbers, + - * /, Enter =, Backspace, Escape (AC)</div>
 
   <script>
     (function(){
+      // Elements
       const exprSmall = document.getElementById('exprSmall');
       const exprBig = document.getElementById('exprBig');
       const keys = document.getElementById('keys');
       const degBtn = document.getElementById('degBtn');
       const radBtn = document.getElementById('radBtn');
+      const memVal = document.getElementById('memVal');
+      const ansVal = document.getElementById('ansVal');
 
-      let expr = '';
+      // State
+      let expression = '';
       let memory = 0;
       let ANS = 0;
       let degMode = true;
 
-      function updateDisplay(){
-        exprSmall.textContent = expr;
-        exprBig.textContent = expr === '' ? '0' : expr;
+      // Helpers object for evaluation
+      const helpers = () => ({
+        PI: Math.PI,
+        E: Math.E,
+        sin: (x) => degMode ? Math.sin(Number(x) * Math.PI / 180) : Math.sin(Number(x)),
+        cos: (x) => degMode ? Math.cos(Number(x) * Math.PI / 180) : Math.cos(Number(x)),
+        tan: (x) => degMode ? Math.tan(Number(x) * Math.PI / 180) : Math.tan(Number(x)),
+        asin: (x) => degMode ? Math.asin(Number(x)) * 180 / Math.PI : Math.asin(Number(x)),
+        acos: (x) => degMode ? Math.acos(Number(x)) * 180 / Math.PI : Math.acos(Number(x)),
+        atan: (x) => degMode ? Math.atan(Number(x)) * 180 / Math.PI : Math.atan(Number(x)),
+        ln: (x) => Math.log(Number(x)),
+        log: (x) => (Math.log10 ? Math.log10(Number(x)) : Math.log(Number(x))/Math.LN10),
+        expE: (x) => Math.exp(Number(x)),
+        exp10: (x) => Math.pow(10, Number(x)),
+        sqrt: (x) => Math.sqrt(Number(x)),
+        cbrt: (x) => Math.cbrt ? Math.cbrt(Number(x)) : Math.pow(Number(x), 1/3),
+        root: (y,x) => Math.pow(Number(x), 1/Number(y)),
+        fact: (n) => { n = Number(n); if(n<0 || !Number.isInteger(n)) throw 'factorial'; let r=1; for(let i=1;i<=n;i++) r*=i; return r; },
+        rand: () => Math.random(),
+        Ans: ANS
+      });
+
+      // sanitize & translate expression into valid JS expression that uses helper names
+      function prepareExpression(raw){
+        if(!raw) return '';
+        let s = String(raw);
+        // replace display multiplication signs
+        s = s.replace(/×/g, '*').replace(/÷/g, '/');
+        // replace unicode pi with PI constant
+        s = s.replace(/π/g, 'PI');
+        // percent: convert 'number%' to '(number/100)'
+        s = s.replace(/(\d+(?:\.\d+)?)%/g, '($1/100)');
+        // factorial: convert 'n!' to 'fact(n)'. Handle chained like (5+2)!
+        s = s.replace(/(\))!/g, 'fact($1)'); // unlikely but keep
+        // replace standalone trailing ! after number or ) with fact(...)
+        s = s.replace(/(\d+(?:\.\d+)?)(?:!)\b/g, 'fact($1)');
+        s = s.replace(/(\))\!/g, function(m){ return 'fact('+m[1]+')'; });
+        // Ans -> ANS helper
+        s = s.replace(/Ans/g, 'Ans');
+        // EXP (scientific) - if user typed e or EXP we keep 'e' notation
+        // We will accept 'e' or 'E' as exponent marker for JS (1e3)
+
+        return s;
       }
 
-      function safeEval(raw){
+      // safe evaluation using Function constructor with helpers in scope
+      function safeEvaluate(raw){
         if(!raw || raw.trim()==='') return 0;
-        // prepare expression: replace unicode operators
-        let s = raw.replace(/×/g,'*').replace(/÷/g,'/').replace(/π/g,'PI').replace(/Ans/g,`(${ANS})`);
-        // provide functions and constants in scope via with-like wrapper
-        const helpers = {
-          PI: Math.PI,
-          E: Math.E,
-          sin: function(x){ return degMode ? Math.sin(x*Math.PI/180) : Math.sin(x); },
-          cos: function(x){ return degMode ? Math.cos(x*Math.PI/180) : Math.cos(x); },
-          tan: function(x){ return degMode ? Math.tan(x*Math.PI/180) : Math.tan(x); },
-          asin: function(x){ return degMode ? Math.asin(x)*180/Math.PI : Math.asin(x); },
-          acos: function(x){ return degMode ? Math.acos(x)*180/Math.PI : Math.acos(x); },
-          atan: function(x){ return degMode ? Math.atan(x)*180/Math.PI : Math.atan(x); },
-          ln: function(x){ return Math.log(x); },
-          log: function(x){ return Math.log10 ? Math.log10(x) : Math.log(x)/Math.LN10; },
-          exp10: function(x){ return Math.pow(10,x); },
-          expE: function(x){ return Math.exp(x); },
-          sqrt: function(x){ return Math.sqrt(x); },
-          cbrt: function(x){ return Math.cbrt ? Math.cbrt(x) : Math.pow(x,1/3); },
-          root: function(y,x){ return Math.pow(Number(x), 1/Number(y)); },
-          fact: function(n){ n = Number(n); if(n<0 || !Number.isInteger(n)) throw 'factorial'; let r=1; for(let i=1;i<=n;i++) r*=i; return r; },
-          rand: function(){ return Math.random(); },
-          ans: ANS,
-        };
-
-        // Replace special tokens user might have typed like 'sqrt(' already intact
-        // We'll create a function with helper names as args
-        const names = Object.keys(helpers);
-        const vals = Object.values(helpers);
+        const prepared = prepareExpression(raw);
+        const H = helpers();
+        const names = Object.keys(H);
+        const vals = Object.values(H);
         try{
-          const fn = new Function(...names, 'return (' + s + ');');
+          // create function with helper names
+          const fn = new Function(...names, 'return ('+prepared+');');
           const res = fn(...vals);
-          if(typeof res === 'number' && !Number.isFinite(res)) throw 'Math error';
+          if(typeof res === 'number' && !Number.isFinite(res)) throw new Error('Math error');
           return res;
         }catch(e){
           return 'Error';
         }
       }
 
-      // button handling
+      // UI update
+      function updateUI(){
+        exprSmall.textContent = expression;
+        exprBig.textContent = expression === '' ? '0' : expression;
+        memVal.textContent = String(memory);
+        ansVal.textContent = String(ANS);
+      }
+
+      // Button handling
       keys.addEventListener('click', (ev)=>{
-        const b = ev.target.closest('button');
-        if(!b) return;
-        const k = b.getAttribute('data-key');
-        handleKey(k);
+        const btn = ev.target.closest('button');
+        if(!btn) return;
+        const k = btn.dataset.key;
+        onKey(k);
       });
 
-      // keyboard support
+      // Keyboard support
       window.addEventListener('keydown', (ev)=>{
-        if(ev.key === 'Enter') { handleKey('='); ev.preventDefault(); }
-        if(ev.key === 'Backspace') { handleKey('back'); ev.preventDefault(); }
-        if(ev.key === 'Escape') { handleKey('AC'); ev.preventDefault(); }
-        // digits and operators
-        if(/[0-9]/.test(ev.key)) handleKey(ev.key);
-        if(ev.key === '.') handleKey('.');
-        if(ev.key === '+') handleKey('+');
-        if(ev.key === '-') handleKey('-');
-        if(ev.key === '*') handleKey('*');
-        if(ev.key === '/') handleKey('/');
+        if(ev.key === 'Enter') { onKey('='); ev.preventDefault(); }
+        if(ev.key === 'Backspace') { onKey('back'); ev.preventDefault(); }
+        if(ev.key === 'Escape') { onKey('AC'); ev.preventDefault(); }
+        if(/[0-9]/.test(ev.key)) onKey(ev.key);
+        if(ev.key === '.') onKey('.');
+        if(ev.key === '+') onKey('+');
+        if(ev.key === '-') onKey('-');
+        if(ev.key === '*') onKey('*');
+        if(ev.key === '/') onKey('/');
       });
 
-      function handleKey(k){
+      function onKey(k){
+        if(k === undefined) return;
         switch(k){
-          case 'AC': expr=''; updateDisplay(); break;
-          case 'CE': // clear last entry (naive: remove last token number)
-            expr = expr.replace(/\d+\.?\d*$|\.$/,''); updateDisplay(); break;
-          case 'back': expr = expr.slice(0,-1); updateDisplay(); break;
-          case '=':
-            {
-              const result = safeEval(expr);
-              expr = (result === 'Error') ? '' : String(result);
-              ANS = (result === 'Error') ? ANS : Number(result);
-              exprBig.textContent = result;
+          case 'AC': expression=''; updateUI(); break;
+          case 'CE': // remove last entry (number or token)
+            expression = expression.replace(/\s*\S+$/,''); updateUI(); break;
+          case 'back': expression = expression.slice(0,-1); updateUI(); break;
+          case '=':{
+            // try to evaluate safely
+            const result = safeEvaluate(expression);
+            if(result === 'Error'){
+              exprBig.textContent = 'Error';
+              exprSmall.textContent = expression;
+            } else {
+              // normalize very small floating precision differences
+              let display = result;
+              if(typeof result === 'number'){
+                // round to 12 significant digits to avoid floating noise
+                display = Number.parseFloat(result.toPrecision(12));
+              }
+              ANS = (typeof display === 'number') ? display : Number(display) || 0;
+              expression = String(display);
+              exprBig.textContent = expression;
               exprSmall.textContent = '';
+              ansVal.textContent = String(ANS);
             }
-            break;
+          } break;
           case 'neg':
-            // toggle sign on last number
-            expr = expr.replace(/(\d+\.?\d*)$/,(m)=>{ return String(Number(m)*-1); }); updateDisplay(); break;
-          case '1/x':
-            {
-              const val = safeEval(expr);
-              if(val==='Error' || Number(val)===0) { expr=''; exprBig.textContent='Error'; } else { expr = String(1/Number(val)); exprBig.textContent=expr; ANS=Number(expr);} 
-            }
-            break;
-          case '%':
-            {
-              const val = safeEval(expr);
-              if(val==='Error') { expr=''; exprBig.textContent='Error'; } else { expr = String(Number(val)/100); exprBig.textContent=expr; ANS=Number(expr);} 
-            }
-            break;
-          case 'fact':
-            try{
-              const v = safeEval(expr);
-              const r = (function(n){ n=Number(n); if(n<0||!Number.isInteger(n)) throw 'Error'; let res=1; for(let i=1;i<=n;i++) res*=i; return res;})(v);
-              expr = String(r); exprBig.textContent=expr; ANS=Number(expr);
-            }catch(e){ expr=''; exprBig.textContent='Error'; }
-            break;
-          case 'rand': expr = String(Math.random()); exprBig.textContent=expr; ANS=Number(expr); break;
-          case 'MC': memory = 0; break;
-          case 'MR': expr += String(memory); updateDisplay(); break;
-          case 'Mplus': { const v = safeEval(expr); if(v!=='Error') memory += Number(v);} break;
-          case 'Mminus': { const v = safeEval(expr); if(v!=='Error') memory -= Number(v);} break;
-          case 'ANS': expr += 'Ans'; updateDisplay(); break;
-          case 'EXP': expr += 'e'; updateDisplay(); break;
-          case 'e_not': expr += 'E'; updateDisplay(); break;
+            // negate last number token
+            expression = expression.replace(/(\d+\.?\d*)$/,(m)=>String(Number(m)*-1)); updateUI(); break;
+          case '1/x':{
+            const v = safeEvaluate(expression);
+            if(v==='Error' || Number(v)===0){ exprBig.textContent='Error'; } else { const r=1/Number(v); ANS=r; expression=String(r); updateUI(); }
+          } break;
+          case 'percent':{
+            // convert last number to percent
+            expression = expression.replace(/(\d+\.?\d*)$/,(m)=>String(Number(m)/100)); updateUI();
+          } break;
+          case 'fact':{
+            try{ const v = safeEvaluate(expression); const fn = helpers().fact; const r = fn(v); ANS = r; expression = String(r); updateUI(); } catch(e){ exprBig.textContent='Error'; }
+          } break;
+          case 'rand': expression = String(Math.random()); updateUI(); break;
+          case 'MC': memory = 0; memVal.textContent = String(memory); break;
+          case 'MR': expression += String(memory); updateUI(); break;
+          case 'Mplus':{ const v = safeEvaluate(expression); if(v!=='Error') memory += Number(v); memVal.textContent = String(memory); } break;
+          case 'Mminus':{ const v = safeEvaluate(expression); if(v!=='Error') memory -= Number(v); memVal.textContent = String(memory); } break;
+          case 'ANS': expression += 'Ans'; updateUI(); break;
+          case 'EXP': expression += 'e'; updateUI(); break;
+          case 'e_not': expression += 'E'; updateUI(); break;
           default:
-            // if token looks like a function or operator simply append
-            expr += k;
-            updateDisplay();
+            // append token as-is
+            expression += k;
+            updateUI();
         }
       }
 
       // deg/rad toggle
-      degBtn.addEventListener('click', ()=>{ degMode=true; degBtn.classList.add('active'); radBtn.classList.remove('active'); });
-      radBtn.addEventListener('click', ()=>{ degMode=false; radBtn.classList.add('active'); degBtn.classList.remove('active'); });
+      degBtn.addEventListener('click', ()=>{ degMode = true; degBtn.classList.add('active'); degBtn.setAttribute('aria-pressed','true'); radBtn.classList.remove('active'); radBtn.setAttribute('aria-pressed','false'); });
+      radBtn.addEventListener('click', ()=>{ degMode = false; radBtn.classList.add('active'); radBtn.setAttribute('aria-pressed','true'); degBtn.classList.remove('active'); degBtn.setAttribute('aria-pressed','false'); });
 
-      // initialize
-      updateDisplay();
+      // Initialize display
+      updateUI();
+
+      // Accessibility: announce result on evaluation
+      const observer = new MutationObserver(()=>{});
+      observer.observe(exprBig, {childList:true});
 
     })();
   </script>
 </body>
 </html>
-
