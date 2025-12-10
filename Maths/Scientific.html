@@ -1,1 +1,404 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Scientific Calculator — Fixvity</title>
+<style>
+  :root{
+    --bg:#f4fafc;
+    --card:#ffffff;
+    --accent:#176fb3;
+    --muted:#6b7280;
+    --radius:12px;
+    --gap:10px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;color:#111;background:var(--bg);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:720px;margin:18px auto;padding:14px}
+  .card{background:var(--card);border-radius:var(--radius);padding:14px;box-shadow:0 6px 20px rgba(16,30,40,0.06)}
+  header h1{margin:0;color:var(--accent);font-size:20px}
+  header p{margin:8px 0 14px;color:var(--muted);font-size:13px}
 
+  /* display */
+  .display{
+    background:#f7fbff;border-radius:10px;padding:12px;margin-bottom:12px;border:1px solid #e8f1fb;
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .expr{color:var(--muted);font-size:14px;min-height:20px;word-break:break-all}
+  .result{font-size:28px;color:#0b5ea8;font-weight:700;min-height:34px}
+
+  /* keypad grid */
+  .keypad{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+  @media (max-width:780px){ .keypad{grid-template-columns:repeat(5,1fr);} }
+  @media (max-width:480px){ .keypad{grid-template-columns:repeat(4,1fr);} }
+
+  button.k{
+    border:0;padding:12px;border-radius:8px;background:#f4f8fb;color:#123;font-weight:600;
+    box-shadow:inset 0 -2px 0 rgba(0,0,0,0.02);cursor:pointer;font-size:15px;
+  }
+  button.k.op{background:#eef6fb;color:var(--accent)}
+  button.k.primary{background:var(--accent);color:#fff}
+  button.k.warn{background:#ffecec;color:#b31b1b}
+  button.k.ghost{background:#fff;border:1px solid #eef2f7;color:var(--muted)}
+
+  /* wide buttons */
+  .span2{grid-column:span 2}
+  .span3{grid-column:span 3}
+
+  /* small controls row */
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+  .controls select, .controls button{padding:8px 10px;border-radius:8px;border:1px solid #e6eef8;background:#fff}
+
+  /* history */
+  .history{margin-top:12px;max-height:220px;overflow:auto;padding-right:6px;}
+  .history-item{padding:10px;border-radius:10px;background:#fbfdff;border:1px solid #eef6fb;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+  .history-item small{color:var(--muted);font-size:13px}
+
+  footer{margin-top:10px;font-size:12px;color:var(--muted);text-align:center}
+
+  /* accessibility hover/focus */
+  button.k:focus{outline:3px solid rgba(23,111,179,0.12)}
+  button.k:hover{transform:translateY(-1px)}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header style="margin-bottom:8px">
+      <h1>Scientific Calculator</h1>
+      <p>Mobile-first, responsive scientific calculator — sin/cos/tan, log, ln, sqrt, pow, factorial, percent, memory & history.</p>
+    </header>
+
+    <div class="card">
+      <div class="display" id="display">
+        <div class="expr" id="expression" aria-live="polite"></div>
+        <div class="result" id="result" aria-live="polite">0</div>
+      </div>
+
+      <div class="controls" style="align-items:center">
+        <label style="color:var(--muted);font-weight:600;font-size:13px">Mode:</label>
+        <select id="mode">
+          <option value="deg">Degrees</option>
+          <option value="rad">Radians</option>
+        </select>
+
+        <label style="color:var(--muted);font-weight:600;font-size:13px">Currency-aware (for formatting):</label>
+        <select id="currency">
+          <option value="USD">$ USD</option>
+          <option value="EUR">€ EUR</option>
+          <option value="GBP">£ GBP</option>
+          <option value="INR">₹ INR</option>
+          <option value="JPY">¥ JPY</option>
+          <option value="AUD">A$ AUD</option>
+        </select>
+
+        <div style="margin-left:auto;display:flex;gap:6px">
+          <button id="mc" class="k ghost" title="Memory clear">MC</button>
+          <button id="mr" class="k ghost" title="Memory recall">MR</button>
+          <button id="mplus" class="k ghost" title="Memory add">M+</button>
+          <button id="mminus" class="k ghost" title="Memory sub">M-</button>
+        </div>
+      </div>
+
+      <!-- keypad -->
+      <div class="keypad" id="keypad" role="application" aria-label="Calculator keypad">
+        <!-- row 1 -->
+        <button class="k op" data-cmd="(">(</button>
+        <button class="k op" data-cmd=")">)</button>
+        <button class="k op" data-cmd="%" title="percent">%</button>
+        <button class="k op" data-cmd="!" title="factorial">n!</button>
+        <button class="k op" data-cmd="^" title="power">^</button>
+        <button class="k warn" id="clear" title="Clear all">AC</button>
+
+        <!-- row 2 -->
+        <button class="k" data-cmd="sin(">sin</button>
+        <button class="k" data-cmd="cos(">cos</button>
+        <button class="k" data-cmd="tan(">tan</button>
+        <button class="k" data-cmd="asin(">asin</button>
+        <button class="k" data-cmd="acos(">acos</button>
+        <button class="k" data-cmd="atan(">atan</button>
+
+        <!-- row 3 -->
+        <button class="k" data-cmd="ln(">ln</button>
+        <button class="k" data-cmd="log10(">log</button>
+        <button class="k" data-cmd="sqrt(">√</button>
+        <button class="k" data-cmd="pow(">pow</button>
+        <button class="k" data-cmd="pi">π</button>
+        <button class="k" id="back" title="Backspace">⌫</button>
+
+        <!-- numbers 7-9 -->
+        <button class="k" data-cmd="7">7</button>
+        <button class="k" data-cmd="8">8</button>
+        <button class="k" data-cmd="9">9</button>
+        <button class="k op" data-cmd="/">÷</button>
+
+        <!-- 4-6 -->
+        <button class="k" data-cmd="4">4</button>
+        <button class="k" data-cmd="5">5</button>
+        <button class="k" data-cmd="6">6</button>
+        <button class="k op" data-cmd="*">×</button>
+
+        <!-- 1-3 -->
+        <button class="k" data-cmd="1">1</button>
+        <button class="k" data-cmd="2">2</button>
+        <button class="k" data-cmd="3">3</button>
+        <button class="k op" data-cmd="-">−</button>
+
+        <!-- 0, ., =, + -->
+        <button class="k span2" data-cmd="0">0</button>
+        <button class="k" data-cmd=".">.</button>
+        <button class="k primary" id="equals" title="Evaluate">=</button>
+        <button class="k op" data-cmd="+">+</button>
+
+        <!-- wide controls below -->
+        <button class="k span3" id="copy" title="Copy result">Copy</button>
+        <button class="k span3" id="clearHistory" title="Clear history">Clear History</button>
+      </div>
+
+      <!-- history -->
+      <div class="history" id="history" aria-live="polite"></div>
+
+      <footer>
+        <small>Tip: Use keyboard to type numbers & operators. Functions require parentheses, e.g. <code>sin(30)</code>.</small>
+      </footer>
+    </div>
+  </div>
+
+<script>
+/* ---------------------------
+  Calculator logic (single-file)
+--------------------------- */
+
+(function(){
+  const exprEl = document.getElementById('expression');
+  const resEl = document.getElementById('result');
+  const keypad = document.getElementById('keypad');
+  const historyEl = document.getElementById('history');
+  const modeSel = document.getElementById('mode');
+  const currencySel = document.getElementById('currency');
+
+  let expression = '';
+  let memory = 0;
+  let hist = [];
+
+  /* Helper: update ui */
+  function updateDisplay(){
+    exprEl.textContent = expression || '';
+    resEl.textContent = expression ? tryEvalPreview(expression) : '0';
+  }
+
+  /* Safe-ish allowed pattern: numbers, math letters, operators, parentheses, decimal, space, comma, e,E */
+  const ALLOWED_RE = /^[0-9+\-*/^()., %!eEa-zA-Z_]*$/;
+
+  /* factorial */
+  function factorial(n){
+    n = Math.floor(n);
+    if (n < 0) return NaN;
+    if (n === 0) return 1;
+    let f = 1;
+    for (let i=2;i<=n;i++) f *= i;
+    return f;
+  }
+
+  /* functions that will be available to the evaluator's scope */
+  function makeScope(){
+    const deg = modeSel.value === 'deg';
+    return {
+      // constants
+      pi: Math.PI,
+      e: Math.E,
+      // trig (respect deg/rad)
+      sin(x){ return deg ? Math.sin(x * Math.PI/180) : Math.sin(x); },
+      cos(x){ return deg ? Math.cos(x * Math.PI/180) : Math.cos(x); },
+      tan(x){ return deg ? Math.tan(x * Math.PI/180) : Math.tan(x); },
+      asin(x){ return deg ? (Math.asin(x) * 180/Math.PI) : Math.asin(x); },
+      acos(x){ return deg ? (Math.acos(x) * 180/Math.PI) : Math.acos(x); },
+      atan(x){ return deg ? (Math.atan(x) * 180/Math.PI) : Math.atan(x); },
+      // logs
+      ln(x){ return Math.log(x); },
+      log10(x){ return Math.log10 ? Math.log10(x) : Math.log(x)/Math.LN10; },
+      sqrt(x){ return Math.sqrt(x); },
+      pow(x,y){ return Math.pow(x,y); },
+      fact: factorial,
+      factf: factorial,
+      // percent helper: user uses "50%" -> replaced earlier into (50/100)
+    };
+  }
+
+  /* Format result using currency selection (for large-number readability) */
+  function formatResult(v){
+    if (typeof v !== 'number' || !isFinite(v)) return String(v);
+    const cur = currencySel.value || 'USD';
+    // quick symbol map
+    const sym = { USD:'$', EUR:'€', GBP:'£', INR:'₹', JPY:'¥', AUD:'A$' }[cur] || '';
+    // show with thousands and 2 decimals
+    return sym + Number(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+
+  /* Replace percent tokens (e.g. 50% -> (50/100)) and handle factorial '!' */
+  function preprocess(expr){
+    // remove spaces
+    expr = expr.replace(/\s+/g,'');
+    // convert percent: any number or parenthetical followed by % -> (x/100)
+    // handle cases like 50% or (100+50)% or 2.5%
+    expr = expr.replace(/(\d+(\.\d+)?|\([^()]*\))%/g, '($1/100)');
+    // convert ^ to **
+    expr = expr.replace(/\^/g, '**');
+    // convert unary-style factorial operator: replace number! or (...)! with fact(number)
+    // we will implement by replacing n! with fact(n)
+    expr = expr.replace(/(\d+(\.\d+)?|\([^()]*\))!/g, 'fact($1)');
+    return expr;
+  }
+
+  /* Quick safe preview evaluation (used to show live result) */
+  function tryEvalPreview(raw){
+    try{
+      const v = evaluateExpression(raw);
+      if (typeof v === 'number' && isFinite(v)) return formatResult(v);
+      return String(v);
+    }catch(e){
+      return '';
+    }
+  }
+
+  /* Evaluate expression with a controlled scope */
+  function evaluateExpression(raw){
+    if (!raw || typeof raw !== 'string') return 0;
+    const pre = preprocess(raw);
+
+    // validation
+    if (!ALLOWED_RE.test(pre)) throw new Error('Invalid characters in expression');
+
+    // create a function body that returns the expression, executing in a known scope
+    // we'll expose allowed helpers by creating an object "scope" and using with(scope) { return <expr>; }
+    const scope = makeScope();
+    // we will assemble the function body as:
+    // "with(scope){ return <pre>; }"
+    const body = 'with(scope){ return (' + pre + '); }';
+
+    // Create function that receives scope and returns result
+    const fn = new Function('scope', body);
+    const result = fn(scope);
+
+    // If result is undefined or NaN, throw to signal error
+    if (result === undefined) throw new Error('Invalid expression');
+    return result;
+  }
+
+  /* commit evaluation (equals pressed) */
+  function commitEvaluate(){
+    if (!expression) return;
+    try{
+      const value = evaluateExpression(expression);
+      hist.unshift({ expr: expression, value: value, time: new Date().toISOString() });
+      if (hist.length > 200) hist.pop();
+      memoryStateStore();
+      renderHistory();
+      expression = String(value);
+      updateDisplay();
+    }catch(err){
+      resEl.textContent = 'Error';
+      console.error(err);
+    }
+  }
+
+  /* keypad click handling */
+  keypad.addEventListener('click', function(e){
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    if (btn.id === 'equals') { commitEvaluate(); return; }
+    if (btn.id === 'clear') { expression = ''; updateDisplay(); return; }
+    if (btn.id === 'back') { expression = expression.slice(0,-1); updateDisplay(); return; }
+    if (btn.id === 'copy') {
+      navigator.clipboard?.writeText(resEl.textContent).then(()=> alert('Result copied'));
+      return;
+    }
+    if (btn.id === 'clearHistory') { hist = []; renderHistory(); return; }
+
+    if (btn.id === 'mc'){ memory = 0; memoryStateStore(); return; }
+    if (btn.id === 'mr'){ expression += String(memory); updateDisplay(); return; }
+    if (btn.id === 'mplus'){ const v = tryParseResult(); if (!isNaN(v)) memory += v; memoryStateStore(); return; }
+    if (btn.id === 'mminus'){ const v = tryParseResult(); if (!isNaN(v)) memory -= v; memoryStateStore(); return; }
+
+    const cmd = btn.getAttribute('data-cmd');
+    if (cmd){
+      // special: pi inject value
+      if (cmd === 'pi') expression += 'pi';
+      else expression += cmd;
+      updateDisplay();
+    }
+  });
+
+  /* keyboard support */
+  window.addEventListener('keydown', function(e){
+    // allow digits, operators, parens, Enter for equals, Backspace
+    const allowedKeys = '0123456789+-*/().^%';
+    if (allowedKeys.indexOf(e.key) !== -1){
+      expression += e.key;
+      updateDisplay();
+      e.preventDefault();
+      return;
+    }
+    if (e.key === 'Enter'){ commitEvaluate(); e.preventDefault(); return; }
+    if (e.key === 'Backspace'){ expression = expression.slice(0,-1); updateDisplay(); e.preventDefault(); return; }
+    if (e.key === '.') { expression += '.'; updateDisplay(); e.preventDefault(); return; }
+  });
+
+  /* try parse result for memory add/sub */
+  function tryParseResult(){
+    try{
+      const v = evaluateExpression(expression || String(hist[0]?.value || 0));
+      return Number(v) || 0;
+    }catch(e){
+      return NaN;
+    }
+  }
+
+  /* history render */
+  function renderHistory(){
+    historyEl.innerHTML = '';
+    if (hist.length === 0) return;
+    hist.forEach((h, idx) => {
+      const it = document.createElement('div');
+      it.className = 'history-item';
+      const left = document.createElement('div');
+      const right = document.createElement('div');
+      left.innerHTML = `<div style="font-weight:700">${h.expr}</div><small>${new Date(h.time).toLocaleString()}</small>`;
+      right.innerHTML = `<div style="font-weight:700">${formatResult(h.value)}</div><small style="color:var(--muted)">${String(h.value)}</small>`;
+      it.appendChild(left); it.appendChild(right);
+      // click to reuse
+      it.addEventListener('click', ()=>{ expression = String(h.value); updateDisplay(); });
+      historyEl.appendChild(it);
+    });
+  }
+
+  /* persist memory in localStorage */
+  function memoryStateStore(){
+    try{ localStorage.setItem('scalc_memory', JSON.stringify({ memory, hist })); }catch(e){}
+  }
+  function memoryStateLoad(){
+    try{
+      const raw = localStorage.getItem('scalc_memory');
+      if (raw){
+        const o = JSON.parse(raw);
+        if (o && typeof o.memory === 'number') memory = o.memory;
+        if (Array.isArray(o.hist)) hist = o.hist.slice(0,200);
+      }
+    }catch(e){}
+  }
+
+  /* currency change updates format preview */
+  currencySel.addEventListener('change', updateDisplay);
+  modeSel.addEventListener('change', updateDisplay);
+
+  /* initial */
+  memoryStateLoad();
+  renderHistory();
+  updateDisplay();
+
+  // expose some debugging (optional)
+  window._scalc = { evaluateExpression, preprocess, history: hist };
+})();
+</script>
+</body>
+</html>
