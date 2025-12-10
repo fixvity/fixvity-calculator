@@ -3,362 +3,620 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Scientific Calculator — World Class</title>
+  <title>World-Class Scientific Calculator</title>
+  <meta name="description" content="Responsive, precise scientific calculator (Deg/Rad, memory, factorial, percent, EXP, Ans, y√x) - mobile-first UI" />
   <style>
+    /* --- Page + layout --- */
     :root{
-      --page-bg: #ffffff; /* outer white background requested */
-      --card-bg: linear-gradient(180deg,#0b1220 0%, #06121a 100%);
-      --panel:#0b1220;
-      --key:#14202b;
-      --key-hover:#162b34;
-      --accent:#10b981; /* emerald */
-      --accent-700:#05956f;
-      --danger:#dc2626; /* red */
-      --muted:#94a3b8;
+      --page-bg: #ffffff;
+      --card-bg: linear-gradient(180deg,#07121a 0%, #06101a 100%);
+      --panel: #07121a;
+      --key: #12202a;
+      --key-press: #0b2e2f;
+      --accent: #10b981;
+      --accent-600: #05956f;
+      --danger: #dc2626;
+      --muted: #94a3b8;
       --glass: rgba(255,255,255,0.03);
-      --shadow: 0 12px 40px rgba(3,9,23,0.12), inset 0 1px 0 rgba(255,255,255,0.02);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      --shadow: 0 14px 40px rgba(15,23,42,0.12);
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     }
+    html,body{height:100%;margin:0;background:var(--page-bg);display:flex;align-items:center;justify-content:center;padding:28px}
+    .wrap{max-width:1100px;width:100%;display:flex;gap:28px;align-items:flex-start;justify-content:center}
+    /* Left description area (keeps whitespace like your screenshot) */
+    .hero{
+      display:none;
+      width:320px;
+      color:#0f1724;
+    }
+    @media(min-width:900px){ .hero{display:block} }
 
-    html,body{height:100%;margin:0;background:var(--page-bg);display:flex;align-items:center;justify-content:center;padding:32px}
-
-    /* Container card */
+    /* Calculator card */
     .calculator{
-      width:420px;
-      max-width:95vw;
+      width:368px;
+      max-width:100%;
       background:var(--card-bg);
-      border-radius:18px;
+      border-radius:20px;
       box-shadow:var(--shadow);
       color:#e6eef8;
       overflow:hidden;
-      border:1px solid rgba(255,255,255,0.04);
-      transform:translateZ(0);
+      border:1px solid rgba(255,255,255,0.03);
       display:flex;flex-direction:column;
     }
 
-    .topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid rgba(255,255,255,0.03)}
+    /* header */
+    .top{
+      display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid rgba(255,255,255,0.03);
+    }
     .brand{display:flex;flex-direction:column}
-    .title{font-weight:700;font-size:16px}
-    .subtitle{font-size:12px;color:var(--muted);margin-top:3px}
+    .title{font-size:16px;font-weight:700}
+    .subtitle{font-size:12px;color:var(--muted);margin-top:4px}
 
-    .mode-toggle{display:flex;gap:8px}
-    .mode-toggle button{padding:8px 12px;border-radius:999px;border:0;background:transparent;color:var(--muted);cursor:pointer;font-weight:600}
-    .mode-toggle .active{background:var(--accent);color:#03261f;box-shadow:0 4px 12px rgba(6,139,107,0.12)}
+    .modeToggle{display:flex;gap:8px}
+    .modeToggle button{border:0;padding:8px 12px;border-radius:999px;background:transparent;color:var(--muted);font-weight:700;cursor:pointer}
+    .modeToggle button.active{background:var(--accent);color:#04201b;box-shadow:0 6px 20px rgba(6,139,107,0.14)}
 
-    .display-area{padding:18px}
-    .display-card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:14px;border-radius:12px;min-height:78px;display:flex;flex-direction:column;justify-content:center}
-    .expr{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .value{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Roboto Mono,monospace;font-size:36px;text-align:right;margin-top:6px}
+    /* display */
+    .displayWrap{padding:16px}
+    .display{
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:12px;padding:10px 14px;min-height:76px;display:flex;flex-direction:column;justify-content:center;
+    }
+    .expr{color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .result{font-family:ui-monospace, Menlo, Monaco, 'Roboto Mono', monospace;font-size:34px;text-align:right;margin-top:6px;word-break:break-all}
 
-    .keys{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;padding:18px}
-    .key{background:var(--key);border-radius:12px;padding:14px;font-size:15px;border:0;color:#e6f0fb;cursor:pointer;box-shadow:inset 0 -2px 0 rgba(0,0,0,0.25);transition:all .12s}
-    .key:hover{transform:translateY(-2px);background:var(--key-hover)}
-    .key:active{transform:translateY(0)}
+    /* keys area */
+    .keys{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding:16px}
+    .key{
+      background:var(--key);
+      border-radius:12px;padding:12px;font-size:14px;border:0;color:#e6f0fb;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;min-height:44px;
+      transition:transform .08s, box-shadow .08s, background .08s;
+      box-shadow: inset 0 -3px 0 rgba(0,0,0,0.25);
+      user-select:none;
+    }
+    .key:hover{transform:translateY(-3px)}
+    .key:active{transform:translateY(0); background:var(--key-press)}
     .key.ac{background:var(--danger);color:white}
-    .key.equals{background:linear-gradient(180deg,var(--accent),var(--accent-700));color:#03261f;grid-column:6/span1;box-shadow:0 8px 18px rgba(6,139,107,0.2)}
+    .key.equals{background:linear-gradient(180deg,var(--accent),var(--accent-600));color:#04201b;grid-column:6/span1;box-shadow:0 10px 30px rgba(6,139,107,0.18)}
     .key.wide{grid-column:span 2}
-    .muted{color:var(--muted);font-size:13px}
+    .muted{color:var(--muted);font-size:12px}
 
-    /* small label under keys for secondary functions */
-    .key .sub{display:block;font-size:11px;color:rgba(255,255,255,0.6);margin-top:6px}
+    /* bottom info */
+    .status{padding:12px 14px;border-top:1px solid rgba(255,255,255,0.02);display:flex;justify-content:space-between;color:var(--muted);font-size:13px}
 
-    /* responsive */
-    @media (max-width:480px){
-      .value{font-size:28px}
+    /* Responsiveness for small phones */
+    @media (max-width:380px){
+      .calculator{width:320px}
+      .result{font-size:28px}
       .keys{gap:8px;padding:12px}
-      .key{padding:10px;font-size:14px}
+      .key{padding:10px;font-size:13px;min-height:40px}
     }
 
-    /* footer note to sit on white page */
-    .credit{padding:10px 0 0 0;text-align:center;color:#334155;font-size:13px}
+    /* Accessible focus */
+    .key:focus{outline:3px solid rgba(255,255,255,0.06);outline-offset:2px}
   </style>
 </head>
 <body>
-  <div style="text-align:center;margin-bottom:12px">
-    <!-- simple heading to show world-class product feel on white background -->
-    <h2 style="margin:0;font-family:Inter,system-ui;font-weight:700;color:#0f172a">Professional Scientific Calculator</h2>
-    <div style="color:#475569;margin-top:6px;font-size:13px">Accurate, fast and reliable calculations — polished UI</div>
-  </div>
-
-  <div class="calculator" role="application" aria-label="Scientific calculator">
-    <div class="topbar">
-      <div class="brand">
-        <div class="title">Scientific Calculator</div>
-        <div class="subtitle">Keyboard · Deg/Rad · Memory · Precise</div>
-      </div>
-
-      <div class="mode-toggle" role="tablist" aria-label="Angle mode">
-        <button id="degBtn" class="active" aria-pressed="true">Deg</button>
-        <button id="radBtn" aria-pressed="false">Rad</button>
-      </div>
+  <div class="wrap">
+    <div class="hero" aria-hidden="true">
+      <h1 style="margin:0;font-size:20px">Professional Scientific Calculator</h1>
+      <p style="color:#334155;margin-top:8px">Polished UI — perfect for mobile. Precise evaluation with robust parsing; no brittle eval() mistakes.</p>
     </div>
 
-    <div class="display-area">
-      <div class="display-card">
-        <div id="exprSmall" class="expr" aria-live="polite"></div>
-        <div id="exprBig" class="value" aria-live="assertive">0</div>
+    <div class="calculator" role="application" aria-label="Scientific calculator">
+      <div class="top">
+        <div class="brand">
+          <div class="title">Scientific Calculator</div>
+          <div class="subtitle">Keyboard · Deg/Rad · Memory · Precise</div>
+        </div>
+
+        <div class="modeToggle" role="tablist" aria-label="Angle mode">
+          <button id="degBtn" class="active" aria-pressed="true">Deg</button>
+          <button id="radBtn" aria-pressed="false">Rad</button>
+        </div>
       </div>
-    </div>
 
-    <div class="keys" id="keys">
-      <!-- Row 1 -->
-      <button class="key" data-key="sin">sin</button>
-      <button class="key" data-key="cos">cos</button>
-      <button class="key" data-key="tan">tan</button>
-      <button class="key" data-key="asin">sin⁻¹</button>
-      <button class="key" data-key="acos">cos⁻¹</button>
-      <button class="key" data-key="atan">tan⁻¹</button>
+      <div class="displayWrap">
+        <div class="display" aria-live="polite">
+          <div id="exprSmall" class="expr"></div>
+          <div id="exprBig" class="result">0</div>
+        </div>
+      </div>
 
-      <!-- Row 2 -->
-      <button class="key" data-key="**">xʸ</button>
-      <button class="key" data-key="**2">x²</button>
-      <button class="key" data-key="**3">x³</button>
-      <button class="key" data-key="sqrt(">√x</button>
-      <button class="key" data-key="cbrt(">³√x</button>
-      <button class="key" data-key="root(">y√x</button>
+      <div class="keys" id="keys" role="group" aria-label="Calculator buttons">
+        <!-- Row 1 -->
+        <button class="key" data-key="sin(">sin</button>
+        <button class="key" data-key="cos(">cos</button>
+        <button class="key" data-key="tan(">tan</button>
+        <button class="key" data-key="asin(">sin⁻¹</button>
+        <button class="key" data-key="acos(">cos⁻¹</button>
+        <button class="key" data-key="atan(">tan⁻¹</button>
 
-      <!-- Row 3 -->
-      <button class="key" data-key="ln(">ln</button>
-      <button class="key" data-key="log(">log</button>
-      <button class="key" data-key="expE(">eˣ</button>
-      <button class="key" data-key="exp10(">10ˣ</button>
-      <button class="key" data-key="PI">π</button>
-      <button class="key" data-key="E">e</button>
+        <!-- Row 2 -->
+        <button class="key" data-key="^">xʸ</button>
+        <button class="key" data-key="^2">x²</button>
+        <button class="key" data-key="^3">x³</button>
+        <button class="key" data-key="sqrt(">√x</button>
+        <button class="key" data-key="cbrt(">³√x</button>
+        <button class="key" data-key="root(">y√x</button>
 
-      <!-- Row 4 -->
-      <button class="key" data-key="(">(</button>
-      <button class="key" data-key=")">)</button>
-      <button class="key" data-key="1/x">1/x</button>
-      <button class="key" data-key="percent">%</button>
-      <button class="key" data-key="fact">n!</button>
-      <button class="key" data-key="rand">RND</button>
+        <!-- Row 3 -->
+        <button class="key" data-key="ln(">ln</button>
+        <button class="key" data-key="log(">log</button>
+        <button class="key" data-key="expE(">eˣ</button>
+        <button class="key" data-key="exp10(">10ˣ</button>
+        <button class="key" data-key="PI">π</button>
+        <button class="key" data-key="E">e</button>
 
-      <!-- Row 5 -->
-      <button class="key" data-key="CE">CE</button>
-      <button class="key ac" data-key="AC">AC</button>
-      <button class="key" data-key="back">⌫</button>
-      <button class="key" data-key="neg">±</button>
-      <button class="key" data-key="MC">MC</button>
-      <button class="key" data-key="MR">MR</button>
+        <!-- Row 4 -->
+        <button class="key" data-key="(">(</button>
+        <button class="key" data-key=")">)</button>
+        <button class="key" data-key="1/x">1/x</button>
+        <button class="key" data-key="%">%</button>
+        <button class="key" data-key="!">n!</button>
+        <button class="key" data-key="rand">RND</button>
 
-      <!-- Row 6 -->
-      <button class="key" data-key="7">7</button>
-      <button class="key" data-key="8">8</button>
-      <button class="key" data-key="9">9</button>
-      <button class="key" data-key="/">÷</button>
-      <button class="key" data-key="Mplus">M+</button>
-      <button class="key" data-key="Mminus">M-</button>
+        <!-- Row 5 -->
+        <button class="key" data-key="CE">CE</button>
+        <button class="key ac" data-key="AC">AC</button>
+        <button class="key" data-key="back">⌫</button>
+        <button class="key" data-key="neg">±</button>
+        <button class="key" data-key="MC">MC</button>
+        <button class="key" data-key="MR">MR</button>
 
-      <!-- Row 7 -->
-      <button class="key" data-key="4">4</button>
-      <button class="key" data-key="5">5</button>
-      <button class="key" data-key="6">6</button>
-      <button class="key" data-key="*">×</button>
-      <button class="key" data-key="ANS">Ans</button>
-      <button class="key" data-key="EXP">EXP</button>
+        <!-- Row 6 -->
+        <button class="key" data-key="7">7</button>
+        <button class="key" data-key="8">8</button>
+        <button class="key" data-key="9">9</button>
+        <button class="key" data-key="/">÷</button>
+        <button class="key" data-key="M+">M+</button>
+        <button class="key" data-key="M-">M-</button>
 
-      <!-- Row 8 -->
-      <button class="key" data-key="1">1</button>
-      <button class="key" data-key="2">2</button>
-      <button class="key" data-key="3">3</button>
-      <button class="key" data-key="-">-</button>
-      <button class="key" data-key="e_not">e</button>
-      <div></div>
+        <!-- Row 7 -->
+        <button class="key" data-key="4">4</button>
+        <button class="key" data-key="5">5</button>
+        <button class="key" data-key="6">6</button>
+        <button class="key" data-key="*">×</button>
+        <button class="key" data-key="Ans">Ans</button>
+        <button class="key" data-key="EXP">EXP</button>
 
-      <!-- Row 9 -->
-      <button class="key wide" data-key="0">0</button>
-      <button class="key" data-key=".">.</button>
-      <button class="key" data-key="+">+</button>
-      <button class="key equals" data-key="=">=</button>
-    </div>
+        <!-- Row 8 -->
+        <button class="key" data-key="1">1</button>
+        <button class="key" data-key="2">2</button>
+        <button class="key" data-key="3">3</button>
+        <button class="key" data-key="-">-</button>
+        <button class="key" data-key="E_not">E</button>
+        <div></div>
 
-    <div style="padding:14px 18px;border-top:1px solid rgba(255,255,255,0.02);background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);">
-      <div style="display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px">
+        <!-- Row 9 -->
+        <button class="key wide" data-key="0">0</button>
+        <button class="key" data-key=".">.</button>
+        <button class="key" data-key="+">+</button>
+        <button class="key equals" data-key="=">=</button>
+      </div>
+
+      <div class="status">
         <div>Memory: <span id="memVal">0</span></div>
         <div>Ans: <span id="ansVal">0</span></div>
       </div>
     </div>
   </div>
 
-  <div class="credit">Tip: Use keyboard — numbers, + - * /, Enter =, Backspace, Escape (AC)</div>
-
   <script>
-    (function(){
-      // Elements
-      const exprSmall = document.getElementById('exprSmall');
-      const exprBig = document.getElementById('exprBig');
-      const keys = document.getElementById('keys');
-      const degBtn = document.getElementById('degBtn');
-      const radBtn = document.getElementById('radBtn');
-      const memVal = document.getElementById('memVal');
-      const ansVal = document.getElementById('ansVal');
+  /**
+   * World-class expression engine:
+   * - Tokenizer -> Shunting-yard -> RPN evaluator
+   * - Supports numbers (incl. 1.23e-4), constants PI/E, Ans
+   * - Functions: sin, cos, tan, asin, acos, atan, ln, log, expE, exp10, sqrt, cbrt, root(y,x), rand, fact via !
+   * - Operators: + - * / ^ (power), unary -, postfix !, % (postfix percent)
+   * - EXP button inserts 'e' for scientific notation (1e3)
+   */
+  (function(){
+    // UI refs
+    const exprSmall = document.getElementById('exprSmall');
+    const exprBig = document.getElementById('exprBig');
+    const keys = document.getElementById('keys');
+    const degBtn = document.getElementById('degBtn');
+    const radBtn = document.getElementById('radBtn');
+    const memVal = document.getElementById('memVal');
+    const ansVal = document.getElementById('ansVal');
 
-      // State
-      let expression = '';
-      let memory = 0;
-      let ANS = 0;
-      let degMode = true;
+    // state
+    let expression = '';
+    let memory = 0;
+    let ANS = 0;
+    let degMode = true;
 
-      // Helpers object for evaluation
-      const helpers = () => ({
+    // helpers for rounding display (12 significant digits)
+    function normalizeNumber(x){
+      if(typeof x !== 'number' || !isFinite(x)) return x;
+      // Avoid scientific notation for small/large; toPrecision then convert
+      const s = Number.parseFloat(x.toPrecision(12));
+      return s;
+    }
+
+    // Tokenizer
+    function tokenize(input){
+      const s = String(input).trim();
+      const tokens = [];
+      // regex patterns
+      const reNumber = /^[0-9]+(?:\.[0-9]*)?(?:[eE][+\-]?\d+)?/;
+      const reIdent = /^[A-Za-z_][A-Za-z0-9_]*/;
+      let i = 0;
+      while(i < s.length){
+        const ch = s[i];
+        if(/\s/.test(ch)){ i++; continue; }
+        // number
+        const mNum = s.slice(i).match(reNumber);
+        if(mNum){
+          tokens.push({type:'number', value: mNum[0]});
+          i += mNum[0].length;
+          continue;
+        }
+        // identifiers / functions (PI, E, Ans, sin, etc)
+        const mId = s.slice(i).match(reIdent);
+        if(mId){
+          tokens.push({type:'ident', value: mId[0]});
+          i += mId[0].length;
+          continue;
+        }
+        // operators and single-char tokens
+        if(ch === '+' || ch === '-' || ch === '*' || ch === '/' || ch === '^' || ch === '(' || ch === ')' || ch === ',' ){
+          tokens.push({type:'op', value:ch});
+          i++; continue;
+        }
+        if(ch === '!'){ tokens.push({type:'postfix', value:'!'}); i++; continue; }
+        if(ch === '%'){ tokens.push({type:'postfix', value:'%'}); i++; continue; }
+        // support unicode symbols for π and × ÷ optionally (we don't expect there but safe)
+        if(ch === 'π' || ch === 'Π'){ tokens.push({type:'ident', value:'PI'}); i++; continue; }
+        if(ch === '×'){ tokens.push({type:'op', value:'*'}); i++; continue; }
+        if(ch === '÷'){ tokens.push({type:'op', value:'/'}); i++; continue; }
+        // scientific 'e' as part of numbers handled above; if user typed standalone 'e', treat as constant E
+        if(ch === 'e' || ch === 'E'){
+          // ambiguous: could be exponent start handled earlier; if standalone letter, treat as ident E
+          // we already matched numbers with e inside; so here treat as ident
+          tokens.push({type:'ident', value: 'E'});
+          i++; continue;
+        }
+
+        // unknown char: append as raw and move on to avoid infinite loop
+        tokens.push({type:'unknown', value: ch});
+        i++;
+      }
+      return tokens;
+    }
+
+    // Shunting-yard to produce RPN
+    function toRPN(tokens){
+      const output = [];
+      const ops = [];
+      // operator info
+      const precedence = {
+        '+': 2, '-': 2,
+        '*': 3, '/': 3,
+        '^': 4
+      };
+      const rightAssociative = { '^': true };
+      // helper to determine if token is function name
+      const isFunction = t => t.type === 'ident' && /^(sin|cos|tan|asin|acos|atan|ln|log|expE|exp10|sqrt|cbrt|root|rand|Ans|PI|E)$/.test(t.value);
+      // Walk tokens
+      for(let i=0;i<tokens.length;i++){
+        const t = tokens[i];
+        if(t.type === 'number'){
+          output.push(t);
+        } else if(t.type === 'ident'){
+          // identifier might be a function or constant
+          // if next token is '(' -> function; else constant (PI/E/Ans)
+          const next = tokens[i+1];
+          if(next && next.type === 'op' && next.value === '('){
+            // function
+            ops.push(t); // push function token
+          } else {
+            // constant or variable -> treat as number at time of evaluation
+            output.push(t);
+          }
+        } else if(t.type === 'op'){
+          if(t.value === '('){
+            ops.push(t);
+          } else if(t.value === ')'){
+            // pop until '('
+            while(ops.length && !(ops[ops.length-1].type==='op' && ops[ops.length-1].value==='(')){
+              output.push(ops.pop());
+            }
+            if(ops.length && ops[ops.length-1].type==='op' && ops[ops.length-1].value==='('){
+              ops.pop(); // pop '('
+            }
+            // if function on top, pop it to output
+            if(ops.length && ops[ops.length-1].type === 'ident') output.push(ops.pop());
+          } else if(t.value === ','){
+            // function argument separator
+            while(ops.length && !(ops[ops.length-1].type === 'op' && ops[ops.length-1].value === '(')){
+              output.push(ops.pop());
+            }
+          } else {
+            // operator + - * / ^
+            // handle unary minus: if operator is '-' and previous token is none or an operator or '(' -> unary
+            const prev = tokens[i-1];
+            if(t.value === '-' && (!prev || (prev.type === 'op' && prev.value !== ')') || prev.type === 'postfix')){
+              // treat unary minus as special operator 'u-'
+              const opToken = {type:'op', value:'u-'};
+              // push to ops according to precedence (unary highest)
+              ops.push(opToken);
+              continue;
+            }
+            // pop operators of higher or equal precedence
+            while(ops.length){
+              const top = ops[ops.length-1];
+              if(top.type === 'op' && top.value !== '('){
+                const tp = precedence[top.value] || 0;
+                const cp = precedence[t.value] || 0;
+                if( ( !rightAssociative[t.value] && cp <= tp ) || ( rightAssociative[t.value] && cp < tp ) ){
+                  output.push(ops.pop());
+                  continue;
+                }
+              } else if(top.type === 'ident'){
+                // functions have higher precedence -> pop to output
+                output.push(ops.pop());
+                continue;
+              }
+              break;
+            }
+            ops.push(t);
+          }
+        } else if(t.type === 'postfix'){
+          // postfix tokens ! and % - push directly to output as postfix operators
+          output.push(t);
+        } else {
+          // unknown tokens -> push raw
+          output.push(t);
+        }
+      }
+      while(ops.length){
+        output.push(ops.pop());
+      }
+      return output;
+    }
+
+    // Evaluate RPN
+    function evaluateRPN(rpn){
+      const stack = [];
+      const H = {
         PI: Math.PI,
         E: Math.E,
-        sin: (x) => degMode ? Math.sin(Number(x) * Math.PI / 180) : Math.sin(Number(x)),
-        cos: (x) => degMode ? Math.cos(Number(x) * Math.PI / 180) : Math.cos(Number(x)),
-        tan: (x) => degMode ? Math.tan(Number(x) * Math.PI / 180) : Math.tan(Number(x)),
-        asin: (x) => degMode ? Math.asin(Number(x)) * 180 / Math.PI : Math.asin(Number(x)),
-        acos: (x) => degMode ? Math.acos(Number(x)) * 180 / Math.PI : Math.acos(Number(x)),
-        atan: (x) => degMode ? Math.atan(Number(x)) * 180 / Math.PI : Math.atan(Number(x)),
-        ln: (x) => Math.log(Number(x)),
-        log: (x) => (Math.log10 ? Math.log10(Number(x)) : Math.log(Number(x))/Math.LN10),
-        expE: (x) => Math.exp(Number(x)),
-        exp10: (x) => Math.pow(10, Number(x)),
-        sqrt: (x) => Math.sqrt(Number(x)),
-        cbrt: (x) => Math.cbrt ? Math.cbrt(Number(x)) : Math.pow(Number(x), 1/3),
-        root: (y,x) => Math.pow(Number(x), 1/Number(y)),
-        fact: (n) => { n = Number(n); if(n<0 || !Number.isInteger(n)) throw 'factorial'; let r=1; for(let i=1;i<=n;i++) r*=i; return r; },
-        rand: () => Math.random(),
         Ans: ANS
-      });
-
-      // sanitize & translate expression into valid JS expression that uses helper names
-      function prepareExpression(raw){
-        if(!raw) return '';
-        let s = String(raw);
-        // replace display multiplication signs
-        s = s.replace(/×/g, '*').replace(/÷/g, '/');
-        // replace unicode pi with PI constant
-        s = s.replace(/π/g, 'PI');
-        // percent: convert 'number%' to '(number/100)'
-        s = s.replace(/(\d+(?:\.\d+)?)%/g, '($1/100)');
-        // factorial: convert 'n!' to 'fact(n)'. Handle chained like (5+2)!
-        s = s.replace(/(\))!/g, 'fact($1)'); // unlikely but keep
-        // replace standalone trailing ! after number or ) with fact(...)
-        s = s.replace(/(\d+(?:\.\d+)?)(?:!)\b/g, 'fact($1)');
-        s = s.replace(/(\))\!/g, function(m){ return 'fact('+m[1]+')'; });
-        // Ans -> ANS helper
-        s = s.replace(/Ans/g, 'Ans');
-        // EXP (scientific) - if user typed e or EXP we keep 'e' notation
-        // We will accept 'e' or 'E' as exponent marker for JS (1e3)
-
-        return s;
-      }
-
-      // safe evaluation using Function constructor with helpers in scope
-      function safeEvaluate(raw){
-        if(!raw || raw.trim()==='') return 0;
-        const prepared = prepareExpression(raw);
-        const H = helpers();
-        const names = Object.keys(H);
-        const vals = Object.values(H);
-        try{
-          // create function with helper names
-          const fn = new Function(...names, 'return ('+prepared+');');
-          const res = fn(...vals);
-          if(typeof res === 'number' && !Number.isFinite(res)) throw new Error('Math error');
-          return res;
-        }catch(e){
-          return 'Error';
+      };
+      // helper functions (respect deg/rad)
+      function number(x){ return Number(x); }
+      const funcs = {
+        sin: (x)=> degMode ? Math.sin(x*Math.PI/180) : Math.sin(x),
+        cos: (x)=> degMode ? Math.cos(x*Math.PI/180) : Math.cos(x),
+        tan: (x)=> degMode ? Math.tan(x*Math.PI/180) : Math.tan(x),
+        asin: (x)=> degMode ? Math.asin(x)*180/Math.PI : Math.asin(x),
+        acos: (x)=> degMode ? Math.acos(x)*180/Math.PI : Math.acos(x),
+        atan: (x)=> degMode ? Math.atan(x)*180/Math.PI : Math.atan(x),
+        ln: (x)=> Math.log(x),
+        log: (x)=> (Math.log10 ? Math.log10(x) : Math.log(x)/Math.LN10),
+        expE: (x)=> Math.exp(x),
+        exp10: (x)=> Math.pow(10, x),
+        sqrt: (x)=> Math.sqrt(x),
+        cbrt: (x)=> Math.cbrt ? Math.cbrt(x) : Math.pow(x, 1/3),
+        root: (y,x)=> Math.pow(x, 1/y),
+        rand: ()=> Math.random()
+      };
+      for(let i=0;i<rpn.length;i++){
+        const t = rpn[i];
+        if(t.type === 'number'){
+          stack.push(Number(t.value));
+        } else if(t.type === 'ident'){
+          // constants like PI, E, Ans
+          const v = t.value;
+          if(v in H) stack.push(H[v]);
+          else {
+            // unknown identifier -> treat as NaN
+            stack.push(NaN);
+          }
+        } else if(t.type === 'postfix'){
+          if(t.value === '!'){
+            // factorial on top of stack
+            const a = stack.pop();
+            const n = Number(a);
+            if(!Number.isInteger(n) || n < 0) throw new Error('factorial');
+            // limit factorial to safe range
+            if(n > 170) throw new Error('factorial overflow');
+            let f = 1;
+            for(let k=1;k<=n;k++) f *= k;
+            stack.push(f);
+          } else if(t.value === '%'){
+            // convert to fraction
+            const a = stack.pop();
+            stack.push(Number(a)/100);
+          }
+        } else if(t.type === 'op'){
+          if(t.value === 'u-'){
+            const a = stack.pop();
+            stack.push(-Number(a));
+          } else {
+            // binary operators
+            const b = stack.pop();
+            const a = stack.pop();
+            if(t.value === '+') stack.push(Number(a)+Number(b));
+            else if(t.value === '-') stack.push(Number(a)-Number(b));
+            else if(t.value === '*') stack.push(Number(a)*Number(b));
+            else if(t.value === '/') {
+              if(Number(b) === 0) throw new Error('div0');
+              stack.push(Number(a)/Number(b));
+            }
+            else if(t.value === '^') stack.push(Math.pow(Number(a), Number(b)));
+            else throw new Error('op');
+          }
+        } else if(t.type === 'op' && t.value === '('){
+          // ignore - should not reach
+        } else if(t.type === 'ident' && /^(sin|cos|tan|asin|acos|atan|ln|log|expE|exp10|sqrt|cbrt|root|rand)$/.test(t.value)){
+          // functions were pushed as identifiers in ops -> but in our toRPN we convert functions to output as tokens with type ident
+          // Actually toRPN pushes functions tokens as ident on output; we need to detect and consume args.
+          // To support root(y,x) with two args, we rely on parentheses and comma: in RPN, root will appear after arguments.
+          // So here, treat function as pop appropriate number of args.
+          const name = t.value;
+          if(name === 'root'){
+            const x = stack.pop(); const y = stack.pop();
+            stack.push(funcs.root(Number(y), Number(x)));
+          } else if(name === 'rand'){
+            stack.push(funcs.rand());
+          } else {
+            const x = stack.pop();
+            const val = funcs[name](Number(x));
+            stack.push(val);
+          }
+        } else {
+          // fallback: unknown token -> try to coerce value
+          if('value' in t) stack.push(Number(t.value));
+          else stack.push(NaN);
         }
       }
+      if(stack.length !== 1) throw new Error('syntax');
+      return stack[0];
+    }
 
-      // UI update
-      function updateUI(){
-        exprSmall.textContent = expression;
-        exprBig.textContent = expression === '' ? '0' : expression;
-        memVal.textContent = String(memory);
-        ansVal.textContent = String(ANS);
-      }
+    // Public evaluate function: tokenizes, toRPN, evaluates with error handling and normalization
+    function evaluate(expressionString){
+      if(!expressionString || expressionString.trim()==='') return 0;
+      // allow using Unicode constants or inputs like "Ans"
+      // Accept small helper notation: user-friendly replacements
+      let s = expressionString.replace(/×/g,'*').replace(/÷/g,'/').replace(/\u03C0/g,'PI'); // π
+      // Replace 'x^2' style tokens? We already provide ^ via xʸ and ^2 buttons
+      // Ensure implicit multiplication like "2PI" -> "2*PI"
+      s = s.replace(/(\d)(PI|Ans|E|\()/g, '$1*$2');
+      s = s.replace(/\)(\d|PI|Ans|E|\()/g, ')*$1');
 
-      // Button handling
-      keys.addEventListener('click', (ev)=>{
-        const btn = ev.target.closest('button');
-        if(!btn) return;
-        const k = btn.dataset.key;
-        onKey(k);
-      });
+      const tokens = tokenize(s);
+      // convert function-like ident tokens that have following '(' into function tokens (we detect in toRPN by presence)
+      const rpn = toRPN(tokens);
+      const val = evaluateRPN(rpn);
+      return normalizeNumber(val);
+    }
 
-      // Keyboard support
-      window.addEventListener('keydown', (ev)=>{
-        if(ev.key === 'Enter') { onKey('='); ev.preventDefault(); }
-        if(ev.key === 'Backspace') { onKey('back'); ev.preventDefault(); }
-        if(ev.key === 'Escape') { onKey('AC'); ev.preventDefault(); }
-        if(/[0-9]/.test(ev.key)) onKey(ev.key);
-        if(ev.key === '.') onKey('.');
-        if(ev.key === '+') onKey('+');
-        if(ev.key === '-') onKey('-');
-        if(ev.key === '*') onKey('*');
-        if(ev.key === '/') onKey('/');
-      });
+    // UI helpers
+    function updateDisplay(){
+      exprSmall.textContent = expression;
+      exprBig.textContent = (expression === '') ? '0' : expression;
+      memVal.textContent = String(memory);
+      ansVal.textContent = String(ANS);
+    }
 
-      function onKey(k){
-        if(k === undefined) return;
-        switch(k){
-          case 'AC': expression=''; updateUI(); break;
-          case 'CE': // remove last entry (number or token)
-            expression = expression.replace(/\s*\S+$/,''); updateUI(); break;
-          case 'back': expression = expression.slice(0,-1); updateUI(); break;
-          case '=':{
-            // try to evaluate safely
-            const result = safeEvaluate(expression);
-            if(result === 'Error'){
-              exprBig.textContent = 'Error';
-              exprSmall.textContent = expression;
-            } else {
-              // normalize very small floating precision differences
-              let display = result;
-              if(typeof result === 'number'){
-                // round to 12 significant digits to avoid floating noise
-                display = Number.parseFloat(result.toPrecision(12));
-              }
+    // Button clicks
+    keys.addEventListener('click', (ev)=>{
+      const b = ev.target.closest('button');
+      if(!b) return;
+      const k = b.dataset.key;
+      handleKey(k);
+      b.blur();
+    });
+
+    // keyboard support
+    window.addEventListener('keydown', (ev)=>{
+      if(ev.key === 'Enter'){ handleKey('='); ev.preventDefault(); return; }
+      if(ev.key === 'Escape'){ handleKey('AC'); ev.preventDefault(); return; }
+      if(ev.key === 'Backspace'){ handleKey('back'); ev.preventDefault(); return; }
+      if(/[0-9]/.test(ev.key)) { handleKey(ev.key); return; }
+      if(ev.key === '.') { handleKey('.'); return; }
+      if(ev.key === '+') { handleKey('+'); return; }
+      if(ev.key === '-') { handleKey('-'); return; }
+      if(ev.key === '*') { handleKey('*'); return; }
+      if(ev.key === '/') { handleKey('/'); return; }
+      if(ev.key === '^') { handleKey('^'); return; }
+    });
+
+    // main input handler
+    function handleKey(k){
+      if(k === undefined) return;
+      switch(k){
+        case 'AC': expression=''; updateDisplay(); break;
+        case 'CE':
+          // remove last token (number or ident or operator)
+          expression = expression.replace(/\\s*([A-Za-z_][A-Za-z0-9_]*|\\d+\\.?\\d*(?:[eE][+\\-]?\\d+)?|\\S)$/, '');
+          updateDisplay(); break;
+        case 'back': expression = expression.slice(0,-1); updateDisplay(); break;
+        case '=':
+          try{
+            // Evaluate
+            const res = evaluate(expression);
+            if(res === 'Error' || Number.isNaN(res)){ exprBig.textContent = 'Error'; }
+            else {
+              const display = (typeof res === 'number') ? normalizeNumber(res) : res;
               ANS = (typeof display === 'number') ? display : Number(display) || 0;
               expression = String(display);
-              exprBig.textContent = expression;
               exprSmall.textContent = '';
+              exprBig.textContent = expression;
               ansVal.textContent = String(ANS);
             }
-          } break;
-          case 'neg':
-            // negate last number token
-            expression = expression.replace(/(\d+\.?\d*)$/,(m)=>String(Number(m)*-1)); updateUI(); break;
-          case '1/x':{
-            const v = safeEvaluate(expression);
-            if(v==='Error' || Number(v)===0){ exprBig.textContent='Error'; } else { const r=1/Number(v); ANS=r; expression=String(r); updateUI(); }
-          } break;
-          case 'percent':{
-            // convert last number to percent
-            expression = expression.replace(/(\d+\.?\d*)$/,(m)=>String(Number(m)/100)); updateUI();
-          } break;
-          case 'fact':{
-            try{ const v = safeEvaluate(expression); const fn = helpers().fact; const r = fn(v); ANS = r; expression = String(r); updateUI(); } catch(e){ exprBig.textContent='Error'; }
-          } break;
-          case 'rand': expression = String(Math.random()); updateUI(); break;
-          case 'MC': memory = 0; memVal.textContent = String(memory); break;
-          case 'MR': expression += String(memory); updateUI(); break;
-          case 'Mplus':{ const v = safeEvaluate(expression); if(v!=='Error') memory += Number(v); memVal.textContent = String(memory); } break;
-          case 'Mminus':{ const v = safeEvaluate(expression); if(v!=='Error') memory -= Number(v); memVal.textContent = String(memory); } break;
-          case 'ANS': expression += 'Ans'; updateUI(); break;
-          case 'EXP': expression += 'e'; updateUI(); break;
-          case 'e_not': expression += 'E'; updateUI(); break;
-          default:
-            // append token as-is
-            expression += k;
-            updateUI();
+          } catch(e){
+            exprBig.textContent = 'Error';
+          }
+          break;
+        case 'neg':
+          // Apply unary minus to last number token (naive but practical)
+          expression = expression.replace(/(\\d+\\.?\\d*(?:[eE][+\\-]?\\d+)?)$/, (m)=> String(-Number(m)));
+          updateDisplay(); break;
+        case '1/x':
+          try{
+            const v = evaluate(expression);
+            if(v === 'Error' || Number(v) === 0) { exprBig.textContent = 'Error'; } else {
+              const r = normalizeNumber(1/Number(v));
+              ANS = r; expression = String(r); updateDisplay(); exprBig.textContent = expression;
+            }
+          } catch(e){ exprBig.textContent = 'Error' }
+          break;
+        case '%':
+          // append percent postfix (will be handled in parser)
+          expression += '%';
+          updateDisplay();
+          break;
+        case '!':
+          expression += '!';
+          updateDisplay();
+          break;
+        case 'rand':
+          expression = String(Math.random());
+          updateDisplay();
+          break;
+        case 'MC':
+          memory = 0; memVal.textContent = String(memory); break;
+        case 'MR':
+          expression += String(memory); updateDisplay(); break;
+        case 'M+': {
+          try{ const v = evaluate(expression); if(!(v === 'Error')) memory += Number(v); memVal.textContent = String(memory);} catch(e){} break;
         }
+        case 'M-': {
+          try{ const v = evaluate(expression); if(!(v === 'Error')) memory -= Number(v); memVal.textContent = String(memory);} catch(e){} break;
+        }
+        case 'Ans':
+          expression += 'Ans'; updateDisplay(); break;
+        case 'EXP':
+          // append 'e' to enable scientific notation (1e3)
+          expression += 'e';
+          updateDisplay();
+          break;
+        case 'E_not':
+          expression += 'E'; updateDisplay(); break;
+        default:
+          // append safe token (functions already include '(' when their button sends e.g. "sin(")
+          expression += k;
+          updateDisplay();
       }
+    }
 
-      // deg/rad toggle
-      degBtn.addEventListener('click', ()=>{ degMode = true; degBtn.classList.add('active'); degBtn.setAttribute('aria-pressed','true'); radBtn.classList.remove('active'); radBtn.setAttribute('aria-pressed','false'); });
-      radBtn.addEventListener('click', ()=>{ degMode = false; radBtn.classList.add('active'); radBtn.setAttribute('aria-pressed','true'); degBtn.classList.remove('active'); degBtn.setAttribute('aria-pressed','false'); });
+    // deg/rad toggle
+    degBtn.addEventListener('click', ()=>{ degMode = true; degBtn.classList.add('active'); degBtn.setAttribute('aria-pressed','true'); radBtn.classList.remove('active'); radBtn.setAttribute('aria-pressed','false'); });
+    radBtn.addEventListener('click', ()=>{ degMode = false; radBtn.classList.add('active'); radBtn.setAttribute('aria-pressed','true'); degBtn.classList.remove('active'); degBtn.setAttribute('aria-pressed','false'); });
 
-      // Initialize display
-      updateUI();
+    // initialize
+    updateDisplay();
 
-      // Accessibility: announce result on evaluation
-      const observer = new MutationObserver(()=>{});
-      observer.observe(exprBig, {childList:true});
+    // Expose evaluate to console for testing if needed
+    window.__calc = { evaluate: (s)=> evaluate(String(s)), getState: ()=> ({ expression, memory, ANS, degMode }) };
 
-    })();
+  })();
   </script>
 </body>
 </html>
