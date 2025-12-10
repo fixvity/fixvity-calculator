@@ -1,41 +1,43 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Scientific Calculator — Verified Working</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Scientific Calculator — Fixed trig, eˣ, 10ˣ, y√x</title>
 <style>
   :root{
-    --bg:#07121a; --page:#ffffff; --key:#12202a; --accent:#10b981; --danger:#dc2626; --muted:#94a3b8;
-    font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+    --page:#ffffff; --card-bg:linear-gradient(180deg,#07121a,#05101a);
+    --key:#12202a; --key-hover:#162b34; --accent:#10b981; --danger:#dc2626; --muted:#94a3b8;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   }
-  html,body{height:100%;margin:0;background:var(--page);display:flex;align-items:center;justify-content:center;padding:24px}
-  .calc{width:360px;max-width:96vw;background:linear-gradient(180deg,var(--bg),#05101a);border-radius:16px;box-shadow:0 18px 50px rgba(9,16,23,0.12);color:#e6eef8;overflow:hidden;display:flex;flex-direction:column}
+  html,body{height:100%;margin:0;background:var(--page);display:flex;align-items:center;justify-content:center;padding:28px}
+  .calc{width:360px;max-width:96vw;background:var(--card-bg);border-radius:16px;box-shadow:0 18px 50px rgba(9,16,23,0.12);color:#e6eef8;overflow:hidden;display:flex;flex-direction:column;max-height:calc(100vh - 56px)}
   .top{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03);display:flex;justify-content:space-between;align-items:center}
   .title{font-weight:700;font-size:16px}
   .modes button{border:0;padding:6px 10px;border-radius:999px;background:transparent;color:var(--muted);cursor:pointer}
   .modes .active{background:var(--accent);color:#04201b}
   .displayWrap{padding:12px}
-  .display{background:#fff;border-radius:10px;padding:12px;min-height:86px;color:#041018;display:flex;flex-direction:column;justify-content:center}
+  .display{background:#fff;border-radius:10px;padding:12px;min-height:86px;display:flex;flex-direction:column;justify-content:center;color:#041018}
   .expr{color:#334155;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .value{font-size:34px;text-align:right;font-family:ui-monospace,Menlo,monospace;margin-top:6px}
-  .statusRow{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;padding:6px 12px}
-  .keys{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding:12px;box-sizing:border-box}
-  .key{background:var(--key);border-radius:12px;padding:10px;font-size:14px;border:0;color:#e6f0fb;cursor:pointer;min-height:44px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 -3px 0 rgba(0,0,0,0.25)}
-  .key:active{transform:translateY(0);background:#0b2e2f}
+  .value{font-size:34px;text-align:right;font-family:ui-monospace,Menlo,monospace;margin-top:6px;word-break:break-all}
+  .keys{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding:12px;box-sizing:border-box;overflow:auto;flex:1}
+  .key{background:var(--key);border-radius:12px;padding:10px;font-size:14px;border:0;color:#e6f0fb;cursor:pointer;min-height:44px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 -3px 0 rgba(0,0,0,0.25);transition:transform .08s}
+  .key:hover{transform:translateY(-3px);background:var(--key-hover)}
+  .key:active{transform:translateY(0);background:var(--key-hover)}
   .key.ac{background:var(--danger);color:white}
   .key.equals{background:linear-gradient(180deg,var(--accent),#05956f);color:#04201b}
   .key.wide{grid-column:span 2}
-  .note{font-size:12px;color:var(--muted);padding:6px 12px}
+  .status{padding:10px 12px;border-top:1px solid rgba(255,255,255,0.02);display:flex;justify-content:space-between;color:var(--muted);font-size:13px}
+  @media (max-width:380px){ .calc{width:320px} .value{font-size:28px} .keys{gap:8px;padding:10px} .key{padding:8px;font-size:13px;min-height:40px} }
 </style>
 </head>
 <body>
-  <div class="calc" id="calculator">
+  <div class="calc" role="application" aria-label="Scientific calculator">
     <div class="top">
       <div class="title">Scientific Calculator</div>
-      <div class="modes">
-        <button id="deg" class="active">Deg</button>
-        <button id="rad">Rad</button>
+      <div class="modes" role="tablist" aria-label="Angle mode">
+        <button id="deg" class="active" aria-pressed="true">Deg</button>
+        <button id="rad" aria-pressed="false">Rad</button>
       </div>
     </div>
 
@@ -44,14 +46,10 @@
         <div id="exprSmall" class="expr"></div>
         <div id="exprBig" class="value">0</div>
       </div>
-      <div class="statusRow">
-        <div id="jsStatus">JS: <strong id="jsReady" style="color:#10b981">loading</strong></div>
-        <div id="memAns">Memory: 0 &nbsp;&nbsp; Ans: 0</div>
-      </div>
     </div>
 
-    <div class="keys" id="keys" role="group" aria-label="Calculator buttons">
-      <!-- Row1 -->
+    <div class="keys" id="keys" role="group" aria-label="Calculator keypad">
+      <!-- Row 1 -->
       <button class="key" data-key="sin(">sin</button>
       <button class="key" data-key="cos(">cos</button>
       <button class="key" data-key="tan(">tan</button>
@@ -59,23 +57,24 @@
       <button class="key" data-key="acos(">cos⁻¹</button>
       <button class="key" data-key="atan(">tan⁻¹</button>
 
-      <!-- Row2 -->
+      <!-- Row 2 -->
       <button class="key" data-key="^">xʸ</button>
       <button class="key" data-key="^3">x³</button>
       <button class="key" data-key="^2">x²</button>
       <button class="key" data-key="sqrt(">√x</button>
       <button class="key" data-key="cbrt(">³√x</button>
-      <button class="key" data-key="root(">y√x</button>
+      <button class="key" data-key="root_prompt">y√x</button>
 
-      <!-- Row3 -->
-      <button class="key" data-key="expE(">eˣ</button>
-      <button class="key" data-key="exp10(">10ˣ</button>
+      <!-- Row 3 -->
+      <!-- changed eˣ and 10ˣ to E^( and 10^( so they use ^ operator reliably -->
+      <button class="key" data-key="E^(">eˣ</button>
+      <button class="key" data-key="10^(">10ˣ</button>
       <button class="key" data-key="PI">π</button>
       <button class="key" data-key="E">e</button>
-      <button class="key" data-key="(">(</button>
-      <button class="key" data-key=")">)</button>
+      <button class="key" data-key="("> ( </button>
+      <button class="key" data-key=")"> ) </button>
 
-      <!-- Row4 -->
+      <!-- Row 4 -->
       <button class="key" data-key="1/x">1/x</button>
       <button class="key" data-key="%">%</button>
       <button class="key" data-key="!">n!</button>
@@ -83,7 +82,7 @@
       <button class="key" data-key="ln(">ln</button>
       <button class="key" data-key="log(">log</button>
 
-      <!-- Row5 -->
+      <!-- Row 5 -->
       <button class="key ac" data-key="AC">AC</button>
       <button class="key" data-key="back">⌫</button>
       <button class="key" data-key="neg">±</button>
@@ -91,7 +90,7 @@
       <button class="key" data-key="MC">MC</button>
       <button class="key" data-key="MR">MR</button>
 
-      <!-- Row6 -->
+      <!-- Row 6 -->
       <button class="key" data-key="7">7</button>
       <button class="key" data-key="8">8</button>
       <button class="key" data-key="9">9</button>
@@ -99,7 +98,7 @@
       <button class="key" data-key="M+">M+</button>
       <button class="key" data-key="M-">M-</button>
 
-      <!-- Row7 -->
+      <!-- Row 7 -->
       <button class="key" data-key="4">4</button>
       <button class="key" data-key="5">5</button>
       <button class="key" data-key="6">6</button>
@@ -107,7 +106,7 @@
       <button class="key" data-key="Ans">Ans</button>
       <button class="key" data-key="EXP">EXP</button>
 
-      <!-- Row8 -->
+      <!-- Row 8 -->
       <button class="key" data-key="1">1</button>
       <button class="key" data-key="2">2</button>
       <button class="key" data-key="3">3</button>
@@ -115,7 +114,7 @@
       <button class="key" data-key="E_not">E</button>
       <button class="key" style="visibility:hidden">_</button>
 
-      <!-- Row9 -->
+      <!-- Row 9 -->
       <button class="key" data-key="-space">-</button>
       <button class="key wide" data-key="0">0</button>
       <button class="key" data-key=".">.</button>
@@ -124,57 +123,64 @@
       <div></div>
     </div>
 
-    <div class="note" id="note">Tip: if buttons don’t respond, make sure JavaScript is enabled and open this file in a browser (Chrome recommended).</div>
+    <div class="status">
+      <div>Memory: <span id="memVal">0</span></div>
+      <div>Ans: <span id="ansVal">0</span></div>
+    </div>
   </div>
 
 <script>
-/* Ensure script runs after DOM built */
-document.addEventListener('DOMContentLoaded', ()=>{
-
+/* Updated calculator:
+   - Rounds tiny results to 0 (abs < 1e-12) so cos(90) -> 0
+   - eˣ and 10ˣ use E^( and 10^( (insert ^ operator) for robust evaluation
+   - y√x opens prompt -> inserts root(y,x)
+   - full tokenizer -> shunting yard -> RPN evaluator
+*/
+(function(){
   // UI refs
   const exprSmall = document.getElementById('exprSmall');
   const exprBig = document.getElementById('exprBig');
   const keys = document.getElementById('keys');
-  const jsReady = document.getElementById('jsReady');
-  const memAns = document.getElementById('memAns');
-  const memVal = document.getElementById('memVal') || null;
-  const ansVal = document.getElementById('ansVal') || null;
+  const memValEl = document.getElementById('memVal');
+  const ansValEl = document.getElementById('ansVal');
+  const degBtn = document.getElementById('deg');
+  const radBtn = document.getElementById('rad');
 
-  // State
+  // state
   let expression = '';
   let memory = 0;
   let ANS = 0;
   let degMode = true;
 
-  // confirm JS loaded in UI
-  jsReady.textContent = 'ready';
-
-  // Small helpers
-  function normalizeNum(x){
+  // helpers
+  function normalizeNumber(x){
     if(typeof x !== 'number' || !isFinite(x)) return x;
+    // if extremely close to zero, treat as zero
+    if(Math.abs(x) < 1e-12) return 0;
     return Number.parseFloat(x.toPrecision(12));
   }
+
   function updateUI(){
     exprSmall.textContent = expression;
     exprBig.textContent = expression === '' ? '0' : expression;
-    // update status row
-    const statusEl = document.getElementById('memAns');
-    if(statusEl) statusEl.textContent = `Memory: ${memory}   Ans: ${ANS}`;
+    memValEl.textContent = String(memory);
+    ansValEl.textContent = String(ANS);
   }
 
-  // SIMPLE tokenizer/eval pipeline (same robust engine as before)
+  // tokenizer
   function tokenize(s){
     s = String(s);
-    const tokens=[]; let i=0;
+    const tokens = [];
+    let i = 0;
     const reNum = /^[0-9]+(?:\.[0-9]*)?(?:[eE][+\-]?\d+)?/;
-    const reId  = /^[A-Za-z_][A-Za-z0-9_]*/;
-    while(i<s.length){
+    const reId = /^[A-Za-z_][A-Za-z0-9_]*/;
+    while(i < s.length){
       const ch = s[i];
       if(/\s/.test(ch)){ i++; continue; }
       const mNum = s.slice(i).match(reNum);
-      if(mNum){ tokens.push({type:'number',v:mNum[0]}); i+=mNum[0].length; continue; }
+      if(mNum){ tokens.push({type:'number', v:mNum[0]}); i += mNum[0].length; continue; }
       const mId = s.slice(i).match(reId);
-      if(mId){ tokens.push({type:'ident',v:mId[0]}); i+=mId[0].length; continue; }
+      if(mId){ tokens.push({type:'ident', v:mId[0]}); i += mId[0].length; continue; }
       if(ch==='+'||ch==='-'||ch==='*'||ch==='/'||ch==='^'||ch==='('||ch===')'||ch===','){ tokens.push({type:'op',v:ch}); i++; continue; }
       if(ch==='!'){ tokens.push({type:'post',v:'!'}); i++; continue; }
       if(ch==='%'){ tokens.push({type:'post',v:'%'}); i++; continue; }
@@ -184,159 +190,243 @@ document.addEventListener('DOMContentLoaded', ()=>{
     return tokens;
   }
 
+  // shunting-yard
   function toRPN(tokens){
-    const out=[], ops=[]; const prec={'+' :2,'-':2,'*':3,'/':3,'^':4}; const right={'^':true};
-    function isFunc(t,i){ return t.type==='ident' && tokens[i+1] && tokens[i+1].type==='op' && tokens[i+1].v==='('; }
+    const out = [], ops = [];
+    const prec = {'+':2,'-':2,'*':3,'/':3,'^':4};
+    const right = {'^':true};
+    function isFunc(t,i){ return t.type === 'ident' && tokens[i+1] && tokens[i+1].type === 'op' && tokens[i+1].v === '('; }
     for(let i=0;i<tokens.length;i++){
-      const t=tokens[i];
-      if(t.type==='number' || (t.type==='ident' && !isFunc(t,i))){ out.push(t); continue; }
+      const t = tokens[i];
+      if(t.type === 'number' || (t.type==='ident' && !isFunc(t,i))){ out.push(t); continue; }
       if(isFunc(t,i)){ ops.push({type:'func',v:t.v}); continue; }
-      if(t.type==='op'){
-        if(t.v==='('){ ops.push(t); continue; }
-        if(t.v===')'){ while(ops.length && !(ops[ops.length-1].type==='op' && ops[ops.length-1].v==='(')) out.push(ops.pop()); if(ops.length && ops[ops.length-1].type==='op' && ops[ops.length-1].v==='(') ops.pop(); if(ops.length && ops[ops.length-1].type==='func') out.push(ops.pop()); continue; }
+      if(t.type === 'op'){
+        if(t.v === '('){ ops.push(t); continue; }
+        if(t.v === ')'){ while(ops.length && !(ops[ops.length-1].type==='op' && ops[ops.length-1].v === '(')) out.push(ops.pop()); if(ops.length && ops[ops.length-1].type==='op' && ops[ops.length-1].v==='(') ops.pop(); if(ops.length && ops[ops.length-1].type==='func') out.push(ops.pop()); continue; }
+        // unary minus
         const prev = tokens[i-1];
-        if(t.v==='-' && (!prev || (prev.type==='op' && prev.v!==')') || prev.type==='post')){ ops.push({type:'op',v:'u-'}); continue; }
+        if(t.v === '-' && (!prev || (prev.type === 'op' && prev.v !== ')') || prev.type === 'post')){ ops.push({type:'op',v:'u-'}); continue; }
         while(ops.length){
-          const top=ops[ops.length-1];
-          if(top.type==='op' && top.v!=='('){
-            const tp=prec[top.v]||0, cp=prec[t.v]||0;
-            if((!right[t.v] && cp<=tp) || (right[t.v] && cp<tp)){ out.push(ops.pop()); continue; }
-          } else if(top.type==='func'){ out.push(ops.pop()); continue; }
+          const top = ops[ops.length-1];
+          if(top.type === 'op' && top.v !== '('){
+            const tp = prec[top.v] || 0, cp = prec[t.v] || 0;
+            if((!right[t.v] && cp <= tp) || (right[t.v] && cp < tp)){ out.push(ops.pop()); continue; }
+          } else if(top.type === 'func'){ out.push(ops.pop()); continue; }
           break;
         }
         ops.push(t); continue;
       }
-      if(t.type==='post'){ out.push(t); continue; }
+      if(t.type === 'post'){ out.push(t); continue; }
       out.push(t);
     }
     while(ops.length) out.push(ops.pop());
     return out;
   }
 
-  function evalRPN(rpn){
-    const st=[];
-    const consts = {PI:Math.PI, E:Math.E, Ans:ANS};
+  // RPN evaluation
+  function evaluateRPN(rpn){
+    const stack = [];
+    const consts = { PI: Math.PI, E: Math.E, Ans: ANS };
     const funcs = {
-      sin:(x)=> degMode?Math.sin(x*Math.PI/180):Math.sin(x),
-      cos:(x)=> degMode?Math.cos(x*Math.PI/180):Math.cos(x),
-      tan:(x)=> degMode?Math.tan(x*Math.PI/180):Math.tan(x),
-      asin:(x)=> degMode?Math.asin(x)*180/Math.PI:Math.asin(x),
-      acos:(x)=> degMode?Math.acos(x)*180/Math.PI:Math.acos(x),
-      atan:(x)=> degMode?Math.atan(x)*180/Math.PI:Math.atan(x),
-      ln:(x)=> Math.log(x),
-      log:(x)=> (Math.log10?Math.log10(x):Math.log(x)/Math.LN10),
-      expE:(x)=> Math.exp(x),
-      exp10:(x)=> Math.pow(10,x),
-      sqrt:(x)=> Math.sqrt(x),
-      cbrt:(x)=> Math.cbrt?Math.cbrt(x):Math.pow(x,1/3),
-      root:(y,x)=> Math.pow(x,1/y),
-      rand:()=> Math.random()
+      sin: (x)=> degMode ? Math.sin(x*Math.PI/180) : Math.sin(x),
+      cos: (x)=> degMode ? Math.cos(x*Math.PI/180) : Math.cos(x),
+      tan: (x)=> degMode ? Math.tan(x*Math.PI/180) : Math.tan(x),
+      asin: (x)=> degMode ? Math.asin(x)*180/Math.PI : Math.asin(x),
+      acos: (x)=> degMode ? Math.acos(x)*180/Math.PI : Math.acos(x),
+      atan: (x)=> degMode ? Math.atan(x)*180/Math.PI : Math.atan(x),
+      ln: (x)=> Math.log(x),
+      log: (x)=> (Math.log10 ? Math.log10(x) : Math.log(x)/Math.LN10),
+      expE: (x)=> Math.exp(x),
+      exp10: (x)=> Math.pow(10, x),
+      sqrt: (x)=> Math.sqrt(x),
+      cbrt: (x)=> Math.cbrt ? Math.cbrt(x) : Math.pow(x, 1/3),
+      root: (y,x)=> Math.pow(x, 1/y),
+      rand: ()=> Math.random()
     };
+
     for(const t of rpn){
-      if(t.type==='number') st.push(Number(t.v));
-      else if(t.type==='ident') st.push(t.v in consts ? consts[t.v] : NaN);
-      else if(t.type==='post'){
-        if(t.v==='!'){ const a=st.pop(); const n=Number(a); if(!Number.isInteger(n)||n<0) throw Error('factorial'); if(n>170) throw Error('overflow'); let r=1; for(let i=1;i<=n;i++) r*=i; st.push(r); }
-        else if(t.v==='%'){ const a=st.pop(); st.push(Number(a)/100); }
-      } else if(t.type==='op'){
-        if(t.v==='u-'){ const a=st.pop(); st.push(-Number(a)); }
-        else { const b=st.pop(); const a=st.pop(); if(t.v==='+') st.push(Number(a)+Number(b)); else if(t.v==='-') st.push(Number(a)-Number(b)); else if(t.v==='*') st.push(Number(a)*Number(b)); else if(t.v==='/'){ if(Number(b)===0) throw Error('div0'); st.push(Number(a)/Number(b)); } else if(t.v==='^') st.push(Math.pow(Number(a),Number(b))); else throw Error('op'); }
-      } else if(t.type==='func'){
-        if(t.v==='root'){ const x=st.pop(); const y=st.pop(); st.push(funcs.root(Number(y),Number(x))); }
-        else { const a=st.pop(); if(!(t.v in funcs)) throw Error('func'); st.push(funcs[t.v](Number(a))); }
-      } else { st.push(NaN); }
+      if(t.type === 'number'){ stack.push(Number(t.v)); }
+      else if(t.type === 'ident'){ stack.push(t.v in consts ? consts[t.v] : NaN); }
+      else if(t.type === 'post'){
+        if(t.v === '!'){
+          const a = stack.pop(); const n = Number(a);
+          if(!Number.isInteger(n) || n < 0) throw new Error('factorial');
+          if(n > 170) throw new Error('factorial overflow');
+          let r = 1; for(let i=1;i<=n;i++) r *= i; stack.push(r);
+        } else if(t.v === '%'){
+          const a = stack.pop(); stack.push(Number(a)/100);
+        }
+      } else if(t.type === 'op'){
+        if(t.v === 'u-'){ const a = stack.pop(); stack.push(-Number(a)); }
+        else {
+          const b = stack.pop(); const a = stack.pop();
+          if(t.v === '+') stack.push(Number(a) + Number(b));
+          else if(t.v === '-') stack.push(Number(a) - Number(b));
+          else if(t.v === '*') stack.push(Number(a) * Number(b));
+          else if(t.v === '/'){ if(Number(b) === 0) throw new Error('div0'); stack.push(Number(a) / Number(b)); }
+          else if(t.v === '^') stack.push(Math.pow(Number(a), Number(b)));
+          else throw new Error('op');
+        }
+      } else if(t.type === 'func'){
+        if(t.v === 'root'){
+          const x = stack.pop(); const y = stack.pop(); stack.push(funcs.root(Number(y), Number(x)));
+        } else {
+          const a = stack.pop();
+          if(!(t.v in funcs)) throw new Error('func');
+          stack.push(funcs[t.v](Number(a)));
+        }
+      } else {
+        stack.push(NaN);
+      }
     }
-    if(st.length!==1) throw Error('syntax');
-    return st[0];
+
+    if(stack.length !== 1) throw new Error('syntax');
+    return stack[0];
   }
 
-  function prepareEval(raw){
-    if(!raw || raw.trim()==='') return 0;
-    let s = String(raw).replace(/×/g,'*').replace(/÷/g,'/');
-    s = s.replace(/(\d)(PI|Ans|E|\()/g,'$1*$2').replace(/(\))(\d|PI|Ans|E|\()/g,')*$2');
+  // high-level evaluate
+  function evaluateExpression(raw){
+    if(!raw || raw.trim() === '') return 0;
+    let s = String(raw).replace(/×/g, '*').replace(/÷/g, '/');
+    // handle implicit multiplication
+    s = s.replace(/(\d)(PI|Ans|E|\()/g, '$1*$2').replace(/(\))(\d|PI|Ans|E|\()/g,')*$2');
     const tokens = tokenize(s);
     const rpn = toRPN(tokens);
-    const result = evalRPN(rpn);
-    return normalizeNum(result);
+    const rawResult = evaluateRPN(rpn);
+    return normalizeNumber(rawResult);
   }
 
-  // Attach listener using delegation
+  // click delegation
   keys.addEventListener('click', (ev)=>{
-    const b = ev.target.closest('button');
-    if(!b) return;
-    const k = b.dataset.key;
+    const btn = ev.target.closest('button');
+    if(!btn) return;
+    const k = btn.getAttribute('data-key');
     handleKey(k);
+    btn.blur();
   });
 
-  // basic keyboard
+  // keyboard support
   window.addEventListener('keydown', (ev)=>{
-    if(ev.key==='Enter'){ handleKey('='); ev.preventDefault(); return; }
-    if(ev.key==='Escape'){ handleKey('AC'); ev.preventDefault(); return; }
-    if(ev.key==='Backspace'){ handleKey('back'); ev.preventDefault(); return; }
+    if(ev.key === 'Enter'){ handleKey('='); ev.preventDefault(); return; }
+    if(ev.key === 'Escape'){ handleKey('AC'); ev.preventDefault(); return; }
+    if(ev.key === 'Backspace'){ handleKey('back'); ev.preventDefault(); return; }
     if(/[0-9]/.test(ev.key)) handleKey(ev.key);
-    if(ev.key==='.') handleKey('.');
-    if(ev.key==='+') handleKey('+');
-    if(ev.key==='-') handleKey('-');
-    if(ev.key==='*') handleKey('*');
-    if(ev.key==='/') handleKey('/');
+    if(ev.key === '.') handleKey('.');
+    if(ev.key === '+') handleKey('+');
+    if(ev.key === '-') handleKey('-');
+    if(ev.key === '*') handleKey('*');
+    if(ev.key === '/') handleKey('/');
   });
 
+  // y√x helper: prompt for y and x, insert root(y,x)
+  function promptRoot(){
+    // prompt twice - simple, works on mobile browsers
+    const ys = window.prompt('y-th root — enter y (e.g. 3 for cube root):', '2');
+    if(ys === null) return; // cancelled
+    const xs = window.prompt('Enter x to take the y-th root of (x):', '27');
+    if(xs === null) return;
+    // validate numbers
+    const y = Number(ys); const x = Number(xs);
+    if(Number.isNaN(y) || Number.isNaN(x)){ alert('Invalid numbers'); return; }
+    expression += `root(${y},${x})`;
+    updateUI();
+  }
+
+  // main input handler
   function handleKey(k){
+    if(k === undefined) return;
     try{
       switch(k){
-        case 'AC': expression=''; updateUI(); break;
-        case 'CE': expression = expression.replace(/\s*([A-Za-z_][A-Za-z0-9_]*|\d+\.?\d*(?:[eE][+\-]?\d+)?|\S)$/, ''); updateUI(); break;
-        case 'back': expression = expression.slice(0,-1); updateUI(); break;
+        case 'AC': expression = ''; updateUI(); break;
+        case 'CE':
+          expression = expression.replace(/\s*([A-Za-z_][A-Za-z0-9_]*|\d+\.?\d*(?:[eE][+\-]?\d+)?|\S)$/, '');
+          updateUI();
+          break;
+        case 'back':
+          expression = expression.slice(0,-1); updateUI();
+          break;
         case '=':
           try{
-            const res = prepareEval(expression);
-            expression = String(res);
-            ANS = (typeof res === 'number') ? res : Number(res)||0;
+            const res = evaluateExpression(expression);
+            // normalized result already sets tiny to 0
+            const display = (typeof res === 'number') ? normalizeNumber(res) : res;
+            ANS = (typeof display === 'number') ? display : Number(display) || 0;
+            expression = String(display);
             exprSmall.textContent = '';
             exprBig.textContent = expression;
             updateUI();
           } catch(e){
             exprBig.textContent = 'Error';
-            console.error('Evaluation error:', e);
+            console.error('Eval error:', e);
           }
           break;
-        case 'neg': expression = expression.replace(/(\d+\.?\d*(?:[eE][+\-]?\d+)?)$/, (m)=> String(-Number(m))); updateUI(); break;
-        case '1/x': { const v = prepareEval(expression); if(v===0||v==='Error') exprBig.textContent='Error'; else { const r = normalizeNum(1/Number(v)); ANS=r; expression=String(r); updateUI(); } } break;
-        case '%': expression += '%'; updateUI(); break;
-        case '!': expression += '!'; updateUI(); break;
-        case 'rand': expression = String(Math.random()); updateUI(); break;
-        case 'MC': memory = 0; updateUI(); break;
-        case 'MR': expression += String(memory); updateUI(); break;
-        case 'M+': { const v = prepareEval(expression); if(!(v==='Error')) memory += Number(v); updateUI(); } break;
-        case 'M-': { const v = prepareEval(expression); if(!(v==='Error')) memory -= Number(v); updateUI(); } break;
-        case 'Ans': expression += 'Ans'; updateUI(); break;
-        case 'EXP': expression += 'e'; updateUI(); break;
-        case 'E_not': expression += 'E'; updateUI(); break;
-        default: expression += k; updateUI();
+        case 'neg':
+          expression = expression.replace(/(\d+\.?\d*(?:[eE][+\-]?\d+)?)$/, (m)=> String(-Number(m)));
+          updateUI();
+          break;
+        case '1/x': {
+          const v = evaluateExpression(expression);
+          if(v === 0 || v === 'Error' || v === undefined) exprBig.textContent = 'Error';
+          else { const r = normalizeNumber(1/Number(v)); ANS = r; expression = String(r); updateUI(); }
+        } break;
+        case '%':
+          expression += '%';
+          updateUI();
+          break;
+        case '!':
+          expression += '!';
+          updateUI();
+          break;
+        case 'rand':
+          expression = String(Math.random());
+          updateUI();
+          break;
+        case 'MC':
+          memory = 0; updateUI();
+          break;
+        case 'MR':
+          expression += String(memory); updateUI();
+          break;
+        case 'M+': {
+          const v = evaluateExpression(expression); if(!(v === 'Error')) memory += Number(v); updateUI();
+        } break;
+        case 'M-': {
+          const v = evaluateExpression(expression); if(!(v === 'Error')) memory -= Number(v); updateUI();
+        } break;
+        case 'Ans':
+          expression += 'Ans'; updateUI(); break;
+        case 'EXP':
+          expression += 'e'; updateUI(); break;
+        case 'E_not':
+          expression += 'E'; updateUI(); break;
+        case 'root_prompt':
+          promptRoot();
+          break;
+        default:
+          // for E^( and 10^( user pressed eˣ or 10ˣ — append as-is
+          expression += k;
+          updateUI();
       }
     } catch(err){
-      console.error('Handle key error:', err);
+      console.error('handleKey error', err);
       exprBig.textContent = 'Error';
     }
   }
 
-  // Deg/Rad toggle
-  document.getElementById('deg').addEventListener('click', ()=>{ degMode=true; document.getElementById('deg').classList.add('active'); document.getElementById('rad').classList.remove('active'); });
-  document.getElementById('rad').addEventListener('click', ()=>{ degMode=false; document.getElementById('rad').classList.add('active'); document.getElementById('deg').classList.remove('active'); });
+  // deg/rad toggle
+  degBtn.addEventListener('click', ()=>{ degMode = true; degBtn.classList.add('active'); radBtn.classList.remove('active'); });
+  radBtn.addEventListener('click', ()=>{ degMode = false; radBtn.classList.add('active'); degBtn.classList.remove('active'); });
 
-  // final init
+  // init
   updateUI();
 
-  // helpful debug: expose small API
+  // expose evaluate for testing
   window.__calc = {
-    evaluate: (s)=> { try { return prepareEval(String(s)); } catch(e){ console.error(e); return 'Error'; } },
+    evaluate: (s)=> { try { return evaluateExpression(String(s)); } catch(e) { console.error(e); return 'Error'; } },
     state: ()=> ({ expression, memory, ANS, degMode })
   };
 
-  // Log message to console so you know script executed
-  console.log('Calculator JS loaded — ready');
-
-});
+})();
 </script>
 </body>
 </html>
